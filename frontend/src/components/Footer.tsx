@@ -2,7 +2,7 @@ import React from 'react';
 import { MapPin, Phone, Clock, Instagram, ExternalLink, Calendar, Heart } from 'lucide-react';
 
 interface FooterProps {
-  onOpenBooking: () => void;
+  onOpenBooking?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {

@@ -60,6 +60,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a href="#contacts" className="hover:text-gold-400 transition-colors">
               Контакти
             </a>
+            <a href="#/admin" className="text-gold-400/90 hover:text-gold-300 transition-colors border border-gold-600/30 px-2.5 py-1 rounded-md text-xs">
+              Менеджер 🔒
+            </a>
           </nav>
 
           {/* Quick Contact & Action CTA */}

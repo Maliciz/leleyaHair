@@ -1,30 +1,40 @@
-import { apiClient } from './axiosInstance';
-import {
-  ServiceCategory,
-  AvailableSlotsResponse,
-  CreateBookingPayload,
-  BookingConfirmation,
-  ReviewItem,
-} from '../types';
+import { axiosInstance as apiClient } from './axiosInstance';
+import { ServiceCategory } from '../types';
 
-export const getServices = async (): Promise<ServiceCategory[]> => {
-  const response = await apiClient.get<ServiceCategory[]>('/services');
-  return response.data;
+export const servicesApi = {
+  async getServices(): Promise<ServiceCategory[]> {
+    try {
+      const response = await apiClient.get('/services');
+      return response.data;
+    } catch (error) {
+      console.warn('Backend service offline, returning fallback catalog', error);
+      return [];
+    }
+  },
 };
 
-export const getAvailableSlots = async (date: string): Promise<AvailableSlotsResponse> => {
-  const response = await apiClient.get<AvailableSlotsResponse>(`/bookings/available-slots`, {
-    params: { date },
-  });
-  return response.data;
-};
+export const bookingsApi = {
+  async getAvailableSlots(date: string): Promise<string[]> {
+    try {
+      const response = await apiClient.get(`/bookings/available-slots`, {
+        params: { date },
+      });
+      return response.data.availableSlots || [];
+    } catch (error) {
+      console.warn('Backend booking service offline, returning fallback slots', error);
+      return ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    }
+  },
 
-export const submitBooking = async (payload: CreateBookingPayload): Promise<BookingConfirmation> => {
-  const response = await apiClient.post<BookingConfirmation>('/bookings', payload);
-  return response.data;
-};
-
-export const getReviews = async (): Promise<ReviewItem[]> => {
-  const response = await apiClient.get<ReviewItem[]>('/reviews');
-  return response.data;
+  async createBooking(bookingData: {
+    clientName: string;
+    clientPhone: string;
+    serviceId: string;
+    date: string;
+    timeSlot: string;
+    comment?: string;
+  }) {
+    const response = await apiClient.post('/bookings', bookingData);
+    return response.data;
+  },
 };

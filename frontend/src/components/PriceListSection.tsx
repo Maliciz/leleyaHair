@@ -3,12 +3,50 @@ import { ServiceCategory } from '../types';
 import { Clock, CheckCircle2, Scissors, UserCheck, Baby } from 'lucide-react';
 
 interface PriceListSectionProps {
-  categories: ServiceCategory[];
-  onSelectService: (serviceId: string) => void;
+  categories?: ServiceCategory[];
+  onSelectService?: (service: any) => void;
 }
 
+const DEFAULT_CATEGORIES: ServiceCategory[] = [
+  {
+    id: 'men',
+    title: 'Чоловічі стрижки',
+    description: 'Професійні чоловічі стрижки, моделювання бороди та догляд',
+    items: [
+      { id: 'm1', name: '«Під нуль»', price: '150 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm2', name: '«Під нуль» + шейвер', price: '250 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm3', name: 'Одна насадка', price: '200 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm4', name: 'Декілька насадок', price: '250 грн', durationMinutes: 45, category: 'men' },
+      { id: 'm5', name: 'Насадка + ножиці', price: '300 грн', durationMinutes: 45, category: 'men' },
+      { id: 'm6', name: 'Подовжена стрижка', price: '350 грн', durationMinutes: 60, category: 'men' },
+      { id: 'm7', name: 'Борода', price: '200 грн', durationMinutes: 30, category: 'men' },
+    ],
+  },
+  {
+    id: 'women',
+    title: 'Жіночі стрижки',
+    description: 'Елегантні жіночі стрижки будь-якої складності та довжини',
+    items: [
+      { id: 'w1', name: 'Чубчик', price: '150 грн', durationMinutes: 30, category: 'women' },
+      { id: 'w2', name: 'Кінчики', price: '300 грн', durationMinutes: 45, category: 'women' },
+      { id: 'w3', name: 'Жіноча коротка', price: '350 грн', durationMinutes: 45, category: 'women' },
+      { id: 'w4', name: '2 довжина', price: '350–400 грн', durationMinutes: 60, category: 'women' },
+      { id: 'w5', name: '3, 4 довжина', price: '400–450 грн', durationMinutes: 60, category: 'women' },
+    ],
+  },
+  {
+    id: 'kids',
+    title: 'Дитячі стрижки',
+    description: 'Дбайливі стрижки для найменших відвідувачів у комфортній атмосфері',
+    items: [
+      { id: 'k1', name: 'Дитяча стрижка', price: '300 грн', durationMinutes: 30, category: 'kids' },
+      { id: 'k2', name: 'Дитяча модельна', price: '350 грн', durationMinutes: 45, category: 'kids' },
+    ],
+  },
+];
+
 export const PriceListSection: React.FC<PriceListSectionProps> = ({
-  categories,
+  categories = DEFAULT_CATEGORIES,
   onSelectService,
 }) => {
   const [activeTab, setActiveTab] = useState<'men' | 'women' | 'kids'>('men');
@@ -98,7 +136,7 @@ export const PriceListSection: React.FC<PriceListSectionProps> = ({
                   </div>
 
                   <button
-                    onClick={() => onSelectService(item.id)}
+                    onClick={() => onSelectService && onSelectService(item)}
                     className="bg-gold-600/15 hover:bg-gold-gradient text-gold-300 hover:text-dark-950 border border-gold-600/40 hover:border-transparent px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1.5 group-hover:shadow-gold-sm"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />

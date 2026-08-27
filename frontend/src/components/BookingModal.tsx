@@ -28,22 +28,62 @@ import {
 import dayjs, { Dayjs } from 'dayjs';
 import confetti from 'canvas-confetti';
 import { ServiceCategory, ServiceItem, BookingConfirmation } from '../types';
-import { getAvailableSlots, submitBooking } from '../api/servicesApi';
+import { bookingsApi } from '../api/servicesApi';
 
 interface BookingModalProps {
   open: boolean;
   onClose: () => void;
-  categories: ServiceCategory[];
+  categories?: ServiceCategory[];
   initialServiceId?: string;
+  initialService?: { id: string; name: string; price: string } | null;
 }
+
+const DEFAULT_CATEGORIES: ServiceCategory[] = [
+  {
+    id: 'men',
+    title: 'Чоловічі стрижки',
+    description: 'Професійні чоловічі стрижки, моделювання бороди та догляд',
+    items: [
+      { id: 'm1', name: '«Під нуль»', price: '150 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm2', name: '«Під нуль» + шейвер', price: '250 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm3', name: 'Одна насадка', price: '200 грн', durationMinutes: 30, category: 'men' },
+      { id: 'm4', name: 'Декілька насадок', price: '250 грн', durationMinutes: 45, category: 'men' },
+      { id: 'm5', name: 'Насадка + ножиці', price: '300 грн', durationMinutes: 45, category: 'men' },
+      { id: 'm6', name: 'Подовжена стрижка', price: '350 грн', durationMinutes: 60, category: 'men' },
+      { id: 'm7', name: 'Борода', price: '200 грн', durationMinutes: 30, category: 'men' },
+    ],
+  },
+  {
+    id: 'women',
+    title: 'Жіночі стрижки',
+    description: 'Елегантні жіночі стрижки будь-якої складності та довжини',
+    items: [
+      { id: 'w1', name: 'Чубчик', price: '150 грн', durationMinutes: 30, category: 'women' },
+      { id: 'w2', name: 'Кінчики', price: '300 грн', durationMinutes: 45, category: 'women' },
+      { id: 'w3', name: 'Жіноча коротка', price: '350 грн', durationMinutes: 45, category: 'women' },
+      { id: 'w4', name: '2 довжина', price: '350–400 грн', durationMinutes: 60, category: 'women' },
+      { id: 'w5', name: '3, 4 довжина', price: '400–450 грн', durationMinutes: 60, category: 'women' },
+    ],
+  },
+  {
+    id: 'kids',
+    title: 'Дитячі стрижки',
+    description: 'Дбайливі стрижки для найменших відвідувачів у комфортній атмосфері',
+    items: [
+      { id: 'k1', name: 'Дитяча стрижка', price: '300 грн', durationMinutes: 30, category: 'kids' },
+      { id: 'k2', name: 'Дитяча модельна', price: '350 грн', durationMinutes: 45, category: 'kids' },
+    ],
+  },
+];
 
 const steps = ['Вибір послуги', 'Дата та час', 'Ваші дані', 'Підтвердження'];
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   open,
   onClose,
-  categories,
+  categories = DEFAULT_CATEGORIES,
   initialServiceId,
+  initialService,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
 
@@ -93,12 +133,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setLoadingSlots(true);
     setErrorMsg(null);
     try {
-      const data = await getAvailableSlots(dateStr);
-      setAvailableSlots(data.availableSlots || []);
-      setBookedSlots(data.bookedSlots || []);
+      const slots = await bookingsApi.getAvailableSlots(dateStr);
+      setAvailableSlots(slots || []);
+      setBookedSlots([]);
       
       // Reset selected slot if no longer available
-      if (selectedTimeSlot && !data.availableSlots.includes(selectedTimeSlot)) {
+      if (selectedTimeSlot && !slots.includes(selectedTimeSlot)) {
         setSelectedTimeSlot('');
       }
     } catch (err: any) {
@@ -160,13 +200,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setErrorMsg(null);
 
     try {
-      const res = await submitBooking({
+      const res = await bookingsApi.createBooking({
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
         serviceId: selectedService.id,
         date: selectedDate,
         timeSlot: selectedTimeSlot,
-        notes: notes.trim(),
+        comment: notes.trim(),
       });
 
       setConfirmation(res);

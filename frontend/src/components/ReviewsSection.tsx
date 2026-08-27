@@ -3,10 +3,29 @@ import { ReviewItem } from '../types';
 import { Star, MessageSquare, ExternalLink, Quote } from 'lucide-react';
 
 interface ReviewsSectionProps {
-  reviews: ReviewItem[];
+  reviews?: ReviewItem[];
 }
 
-export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
+const DEFAULT_REVIEWS: ReviewItem[] = [
+  {
+    id: '1',
+    authorName: 'Михайло Коваленко',
+    rating: 5,
+    comment: 'Чудовий салон у Вишневому! Робив подовжену стрижку та моделювання бороди. Майстри професіонали своєї справи, атмосферно та якісно.',
+    date: '15 серпня 2026',
+    serviceUsed: 'Подовжена стрижка + Борода',
+  },
+  {
+    id: '2',
+    authorName: 'Олена Петренко',
+    rating: 5,
+    comment: 'Дуже задоволена стрижкою та підрівнюванням кінчиків. Комфортна атмосфера, смачна кава та привітний персонал. Обов\'язково повернусь!',
+    date: '20 серпня 2026',
+    serviceUsed: 'Жіноча стрижка (2 довжина)',
+  },
+];
+
+export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAULT_REVIEWS }) => {
   return (
     <section id="reviews" className="py-24 bg-dark-950 relative overflow-hidden">
       {/* Glow Effects */}

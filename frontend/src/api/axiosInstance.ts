@@ -1,28 +1,41 @@
 import axios from 'axios';
 
-// Base URL points to backend API (or current host if proxied by Vite)
 const baseURL = import.meta.env.VITE_API_URL || '/api';
 
-export const apiClient = axios.create({
+export const axiosInstance = axios.create({
   baseURL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
 });
 
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
+// Request Interceptor: Attach JWT Token if present
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('leleya_admin_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor: Handle 401 Unauthorized
+axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    let errorMessage = 'Виникла помилка під час звʼязку з сервером. Спробуйте пізніше.';
-    if (error.response && error.response.data && error.response.data.message) {
-      if (Array.isArray(error.response.data.message)) {
-        errorMessage = error.response.data.message.join('. ');
-      } else {
-        errorMessage = error.response.data.message;
+    if (error.response && error.response.status === 401) {
+      // Clear expired auth session if on admin pages
+      if (window.location.pathname.startsWith('/admin') && !window.location.pathname.includes('/login')) {
+        localStorage.removeItem('leleya_admin_token');
+        localStorage.removeItem('leleya_admin_user');
+        window.location.href = '#/admin/login';
       }
     }
-    return Promise.reject(new Error(errorMessage));
+    return Promise.reject(error);
   }
 );

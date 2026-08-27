@@ -2,7 +2,7 @@ export interface ServiceItem {
   id: string;
   name: string;
   price: string;
-  priceValue: number;
+  priceValue?: number;
   durationMinutes: number;
   description?: string;
   category: 'men' | 'women' | 'kids';

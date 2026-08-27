@@ -3,6 +3,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { MastersModule } from './masters/masters.module';
 import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
@@ -11,6 +12,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     AuthModule,
     ServicesModule,
     BookingsModule,
+    MastersModule,
     ReviewsModule,
   ],
 })
