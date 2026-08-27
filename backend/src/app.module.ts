@@ -6,6 +6,7 @@ import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { MastersModule } from './masters/masters.module';
 import { BarberModule } from './barber/barber.module';
+import { FinanceModule } from './finance/finance.module';
 import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     BookingsModule,
     MastersModule,
     BarberModule,
+    FinanceModule,
     ReviewsModule,
   ],
   controllers: [AppController],

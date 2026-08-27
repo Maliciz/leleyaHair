@@ -1,0 +1,27 @@
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { FinanceService, FinanceQueryParams } from './finance.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@Controller('api/admin/finance')
+@UseGuards(JwtAuthGuard)
+export class FinanceController {
+  constructor(private readonly financeService: FinanceService) {}
+
+  @Get('summary')
+  async getFinanceSummary(
+    @Query('period') period?: 'today' | 'week' | 'month' | 'custom',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getFinanceSummary({ period, startDate, endDate });
+  }
+
+  @Get('masters-breakdown')
+  async getMastersBreakdown(
+    @Query('period') period?: 'today' | 'week' | 'month' | 'custom',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getMastersBreakdown({ period, startDate, endDate });
+  }
+}
