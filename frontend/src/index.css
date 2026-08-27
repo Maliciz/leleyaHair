@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0c0c0e;
+    color: #f3f4f6;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+}
+
+/* Custom Rose Gold & Bronze Metallic Gradients */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #F0D5C3 0%, #D4AF37 50%, #C59A77 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #C59A77 100%);
+}
+
+.bg-gold-gradient-hover {
+  background: linear-gradient(135deg, #E5C158 0%, #D4AF37 100%);
+}
+
+.border-gold-glow {
+  border-color: rgba(197, 154, 119, 0.4);
+  box-shadow: 0 0 15px rgba(197, 154, 119, 0.15);
+}
+
+.glass-card {
+  background: rgba(24, 24, 28, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 154, 119, 0.15);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(197, 154, 119, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(197, 154, 119, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0c0e;
+}
+::-webkit-scrollbar-thumb {
+  background: #282830;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C59A77;
+}
