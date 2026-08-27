@@ -104,9 +104,18 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
 
         </div>
 
-        {/* Bottom copyright line */}
+        {/* Bottom copyright line with subtle staff login link */}
         <div className="pt-8 border-t border-gray-800 text-center text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} Перукарня «Лелея». Всі права захищено.</p>
+          <div className="flex items-center gap-4">
+            <a
+              href="#/admin"
+              className="text-[11px] text-zinc-500 hover:text-zinc-400 transition-colors opacity-70 hover:opacity-100 no-underline"
+            >
+              Вхід для персоналу
+            </a>
+            <span className="text-zinc-700">|</span>
+            <p>© {new Date().getFullYear()} Перукарня «Лелея». Всі права захищені.</p>
+          </div>
           <p className="flex items-center gap-1">
             Зроблено з <Heart className="w-3.5 h-3.5 text-rose-500 fill-current" /> у м. Вишневе
           </p>

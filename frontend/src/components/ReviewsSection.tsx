@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ReviewItem } from '../types';
 import { Star, MessageSquare, ExternalLink, Quote } from 'lucide-react';
 
@@ -6,29 +6,46 @@ interface ReviewsSectionProps {
   reviews?: ReviewItem[];
 }
 
-const DEFAULT_REVIEWS: ReviewItem[] = [
+export const GOOGLE_REVIEWS: ReviewItem[] = [
   {
     id: '1',
-    authorName: 'Михайло Коваленко',
+    authorName: 'Світлана Ковальчук',
+    avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s40-c',
     rating: 5,
-    comment: 'Чудовий салон у Вишневому! Робив подовжену стрижку та моделювання бороди. Майстри професіонали своєї справи, атмосферно та якісно.',
-    date: '15 серпня 2026',
-    serviceUsed: 'Подовжена стрижка + Борода',
+    date: 'місяць тому',
+    comment: 'Чудова перукарня! Дуже затишна атмосфера, майстри справжні професіонали своєї справи. Стрижкою дуже задоволена, обов\'язково повернуся ще!',
+    serviceUsed: 'Жіноча стрижка',
   },
   {
     id: '2',
-    authorName: 'Олена Петренко',
+    authorName: 'Олександр Мельник',
+    avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s40-c',
     rating: 5,
-    comment: 'Дуже задоволена стрижкою та підрівнюванням кінчиків. Комфортна атмосфера, смачна кава та привітний персонал. Обов\'язково повернусь!',
-    date: '20 серпня 2026',
-    serviceUsed: 'Жіноча стрижка (2 довжина)',
+    date: '2 місяці тому',
+    comment: 'Швидко, якісно та за приємними цінами. Чоловіча стрижка та борода зроблені на найвищому рівні. Рекомендую всім у Вишневому!',
+    serviceUsed: 'Чоловіча стрижка + Борода',
+  },
+  {
+    id: '3',
+    authorName: 'Юлия Лабун',
+    avatarUrl: 'https://lh3.googleusercontent.com/a-/ALV-UjWzbDKLd4eiecB4xRAOoImQC4S7YBw6PtZUOexCymn34t2rI18K=w36-h36-p-rp-mo-br100',
+    rating: 5,
+    date: '3 тижні тому',
+    comment: 'Затишно, працює спеціаліст. Дуже задоволена 👍 …',
+    serviceUsed: 'Перукарські послуги',
   },
 ];
 
-export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAULT_REVIEWS }) => {
+export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = GOOGLE_REVIEWS }) => {
+  const [failedAvatars, setFailedAvatars] = useState<Record<string, boolean>>({});
+
+  const handleAvatarError = (id: string) => {
+    setFailedAvatars((prev) => ({ ...prev, [id]: true }));
+  };
+
   return (
     <section id="reviews" className="py-24 bg-dark-950 relative overflow-hidden">
-      {/* Glow Effects */}
+      {/* Ambient Glow */}
       <div className="absolute top-1/3 right-0 w-80 h-80 bg-gold-600/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -36,7 +53,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAUL
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-xs uppercase tracking-widest text-gold-500 font-semibold mb-2 block">
-            Відгуки та рейтинг
+            Відгуки Google Maps
           </span>
           <h2 className="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
             Що кажуть наші клієнти
@@ -48,33 +65,36 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAUL
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {reviews.map((review) => (
             <div
               key={review.id}
               className="glass-card rounded-2xl p-6 border border-gold-600/20 glass-card-hover flex flex-col justify-between relative"
             >
-              <Quote className="absolute top-4 right-4 w-10 h-10 text-gold-600/10" />
+              <Quote className="absolute top-4 right-4 w-8 h-8 text-gold-600/10" />
 
               <div>
-                {/* Author Info */}
+                {/* Author Avatar & Name */}
                 <div className="flex items-center gap-3 mb-4">
-                  {review.avatarUrl ? (
+                  {review.avatarUrl && !failedAvatars[review.id] ? (
                     <img
                       src={review.avatarUrl}
                       alt={review.authorName}
-                      className="w-12 h-12 rounded-full object-cover border border-gold-600/40"
+                      onError={() => handleAvatarError(review.id)}
+                      className="w-11 h-11 rounded-full object-cover border border-gold-600/40 shrink-0"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-gold-600/20 border border-gold-600/40 flex items-center justify-center font-bold text-gold-400">
+                    <div className="w-11 h-11 rounded-full bg-gold-600/20 border border-gold-600/40 flex items-center justify-center font-bold text-gold-400 shrink-0">
                       {review.authorName.charAt(0)}
                     </div>
                   )}
-                  <div>
-                    <h3 className="font-semibold text-white text-base">{review.authorName}</h3>
-                    <span className="text-xs text-gold-500 font-medium">
-                      Послуга: {review.serviceUsed}
-                    </span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-white text-sm truncate">{review.authorName}</h3>
+                    {review.serviceUsed && (
+                      <span className="text-[11px] text-gold-500 font-medium block truncate">
+                        {review.serviceUsed}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -85,14 +105,14 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAUL
                   ))}
                 </div>
 
-                {/* Review Text */}
-                <p className="text-sm text-gray-300 leading-relaxed italic mb-4">
+                {/* Review Content */}
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed italic mb-4">
                   "{review.comment}"
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-gray-800 text-[11px] text-gray-500 flex justify-between items-center">
-                <span>Перевірений відгук Google Maps</span>
+              <div className="pt-3 border-t border-gray-800/80 text-[11px] text-gray-500 flex justify-between items-center">
+                <span className="text-gray-400">Google Maps Review</span>
                 <span>{review.date}</span>
               </div>
             </div>
@@ -117,3 +137,5 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews = DEFAUL
     </section>
   );
 };
+
+export default ReviewsSection;
