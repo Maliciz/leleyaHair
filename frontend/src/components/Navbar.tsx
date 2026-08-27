@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Clock, MapPin, Calendar, Menu, X } from 'lucide-react';
+import { Phone, Clock, MapPin, Calendar, Menu, X, Instagram } from 'lucide-react';
 
 interface NavbarProps {
   onOpenBooking: (serviceId?: string) => void;
@@ -19,10 +19,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled
-        ? 'bg-dark-950/90 backdrop-blur-md py-3 border-b border-gold-600/20 shadow-lg'
-        : 'bg-transparent py-5'
-        }`}
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? 'bg-dark-950/90 backdrop-blur-md py-3 border-b border-gold-600/20 shadow-lg'
+          : 'bg-transparent py-5'
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
@@ -50,6 +51,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a href="#services" className="hover:text-gold-400 transition-colors">
               Послуги та ціни
             </a>
+            <a href="#portfolio" className="hover:text-gold-400 transition-colors flex items-center gap-1">
+              <span>Галерея</span>
+              <span className="text-[9px] px-1.5 py-0.2 bg-gold-600/20 text-gold-400 rounded-full border border-gold-600/30">Insta</span>
+            </a>
             <a href="#reviews" className="hover:text-gold-400 transition-colors">
               Відгуки
             </a>
@@ -59,7 +64,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a href="#contacts" className="hover:text-gold-400 transition-colors">
               Контакти
             </a>
-
           </nav>
 
           {/* Quick Contact & Action CTA */}
@@ -117,6 +121,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
               className="text-gray-300 hover:text-gold-400"
             >
               Послуги та ціни
+            </a>
+            <a
+              href="#portfolio"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-gray-300 hover:text-gold-400 flex items-center gap-2"
+            >
+              <span>Галерея & Instagram</span>
+              <Instagram className="w-4 h-4 text-pink-400" />
             </a>
             <a
               href="#reviews"

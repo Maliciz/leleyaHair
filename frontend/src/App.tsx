@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { PriceListSection } from './components/PriceListSection';
+import { InstagramGallerySection } from './components/InstagramGallerySection';
 import { ReviewsSection } from './components/ReviewsSection';
 import { PaymentSection } from './components/PaymentSection';
 import { Footer } from './components/Footer';
@@ -91,6 +92,7 @@ export const App: React.FC = () => {
       <main>
         <HeroSection onOpenBooking={() => handleOpenBooking()} />
         <PriceListSection onSelectService={(service: any) => handleOpenBooking(service)} />
+        <InstagramGallerySection />
         <ReviewsSection />
         <PaymentSection />
       </main>
