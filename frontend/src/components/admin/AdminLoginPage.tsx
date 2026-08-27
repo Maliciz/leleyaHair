@@ -25,7 +25,11 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
-        window.location.hash = '#/admin/dashboard';
+        if (res.user.role === 'BARBER') {
+          window.location.hash = '#/barber/dashboard';
+        } else {
+          window.location.hash = '#/admin/dashboard';
+        }
         window.location.reload();
       }
     } catch (err: any) {
@@ -59,7 +63,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
             <img src="./leleya_logo.png" alt="ЛЕЛЕЯ Logo" className="w-full h-full object-cover rounded-full" />
           </div>
           <h2 className="font-serif text-2xl font-bold tracking-wide text-white">
-            Вхід в панель керування
+            Портал Персоналу
           </h2>
           <p className="text-xs text-gold-400 mt-1 uppercase tracking-widest font-semibold">
             Перукарня «Лелея»
@@ -78,7 +82,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs text-gray-300 mb-2 font-medium">
-              Електронна пошта менеджеру
+              Електронна пошта
             </label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gold-400/70" />
@@ -87,7 +91,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="manager@leleya.ua"
+                placeholder="manager@leleya.ua або anastasia@leleya.ua"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-dark-950 border border-gold-600/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-gold-500 transition-colors"
               />
             </div>
@@ -120,16 +124,16 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
             ) : (
               <>
                 <Scissors className="w-4 h-4" />
-                <span>Увійти в панель</span>
+                <span>Увійти в кабінет</span>
               </>
             )}
           </button>
         </form>
 
         {/* Demo Credentials hint */}
-        <div className="mt-8 pt-4 border-t border-gold-600/10 text-center text-xs text-gray-400">
-          <p>Логін за замовчуванням: <strong className="text-white">manager@leleya.ua</strong></p>
-          <p>Пароль за замовчуванням: <strong className="text-white">manager123</strong></p>
+        <div className="mt-8 pt-4 border-t border-gold-600/10 text-center text-xs text-gray-400 space-y-1">
+          <p>👑 Менеджер: <strong className="text-white">manager@leleya.ua</strong> / <strong className="text-white">manager123</strong></p>
+          <p>✂️ Перукар: <strong className="text-white">anastasia@leleya.ua</strong> / <strong className="text-white">barber123</strong></p>
         </div>
       </div>
     </div>

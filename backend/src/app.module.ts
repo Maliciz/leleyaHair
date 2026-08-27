@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { MastersModule } from './masters/masters.module';
+import { BarberModule } from './barber/barber.module';
 import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ServicesModule,
     BookingsModule,
     MastersModule,
+    BarberModule,
     ReviewsModule,
   ],
   controllers: [AppController],

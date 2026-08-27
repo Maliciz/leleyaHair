@@ -14,6 +14,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
+      include: { master: true },
     });
 
     if (!user) {
@@ -25,7 +26,12 @@ export class AuthService {
       throw new UnauthorizedException('Невірний email або пароль');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      masterId: user.master?.id || null,
+    };
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -35,6 +41,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        masterId: user.master?.id || null,
       },
     };
   }

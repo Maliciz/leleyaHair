@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   MANAGER
   ADMIN
+  BARBER
 }
 
 enum BookingStatus {
@@ -25,24 +26,38 @@ model User {
   password  String
   name      String
   role      Role     @default(MANAGER)
+  master    Master?
   createdAt DateTime @default(now())
 }
 
 model Master {
-  id       String    @id @default(uuid())
-  name     String
-  isActive Boolean   @default(true)
-  bookings Booking[]
+  id            String         @id @default(uuid())
+  name          String
+  isActive      Boolean        @default(true)
+  userId        String?        @unique
+  user          User?          @relation(fields: [userId], references: [id])
+  bookings      Booking[]
+  workSchedules WorkSchedule[]
+}
+
+model WorkSchedule {
+  id        String   @id @default(uuid())
+  masterId  String
+  master    Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  workDate  DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([masterId, workDate])
 }
 
 model Service {
-  id        String    @id @default(uuid())
-  name      String
-  category  String
-  price     String
+  id         String    @id @default(uuid())
+  name       String
+  category   String
+  price      String
   priceValue Int
-  duration  Int
-  bookings  Booking[]
+  duration   Int
+  bookings   Booking[]
 }
 
 model Booking {

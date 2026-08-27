@@ -19,15 +19,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled
-          ? 'bg-dark-950/90 backdrop-blur-md py-3 border-b border-gold-600/20 shadow-lg'
-          : 'bg-transparent py-5'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled
+        ? 'bg-dark-950/90 backdrop-blur-md py-3 border-b border-gold-600/20 shadow-lg'
+        : 'bg-transparent py-5'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          
+
           {/* Brand Logo & Name */}
           <a href="#" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-full border border-gold-600/40 p-0.5 flex items-center justify-center bg-dark-900 group-hover:border-gold-500 transition-colors shadow-gold-sm">
@@ -60,9 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a href="#contacts" className="hover:text-gold-400 transition-colors">
               Контакти
             </a>
-            <a href="#/admin" className="text-gold-400/90 hover:text-gold-300 transition-colors border border-gold-600/30 px-2.5 py-1 rounded-md text-xs">
-              Менеджер 🔒
-            </a>
+
           </nav>
 
           {/* Quick Contact & Action CTA */}

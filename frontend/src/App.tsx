@@ -9,6 +9,8 @@ import { BookingModal } from './components/BookingModal';
 import { ProtectedAdminRoute } from './components/admin/ProtectedAdminRoute';
 import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminDashboardPage } from './components/admin/AdminDashboardPage';
+import { ProtectedBarberRoute } from './components/barber/ProtectedBarberRoute';
+import { BarberDashboardPage } from './components/barber/BarberDashboardPage';
 
 export const App: React.FC = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -18,7 +20,7 @@ export const App: React.FC = () => {
     price: string;
   } | null>(null);
 
-  // Hash-based simple router for SPA client & admin panel
+  // Hash-based simple router for SPA client, admin panel & barber portal
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
 
   useEffect(() => {
@@ -44,18 +46,33 @@ export const App: React.FC = () => {
     setSelectedService(null);
   };
 
-  // Route 1: Admin Login Page
-  if (currentRoute === '#/admin/login') {
+  // Route 1: Staff Portal Login Page
+  if (currentRoute === '#/admin/login' || currentRoute === '#/barber/login') {
     return (
       <AdminLoginPage
         onLoginSuccess={() => {
-          window.location.hash = '#/admin/dashboard';
+          const userStr = localStorage.getItem('leleya_admin_user');
+          const user = userStr ? JSON.parse(userStr) : null;
+          if (user?.role === 'BARBER') {
+            window.location.hash = '#/barber/dashboard';
+          } else {
+            window.location.hash = '#/admin/dashboard';
+          }
         }}
       />
     );
   }
 
-  // Route 2: Admin Dashboard Page
+  // Route 2: Barber Personal Portal
+  if (currentRoute.startsWith('#/barber')) {
+    return (
+      <ProtectedBarberRoute>
+        <BarberDashboardPage />
+      </ProtectedBarberRoute>
+    );
+  }
+
+  // Route 3: Admin / Manager Dashboard
   if (currentRoute.startsWith('#/admin')) {
     return (
       <ProtectedAdminRoute>

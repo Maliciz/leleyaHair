@@ -6,21 +6,65 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding Leleya Hair Salon database...');
 
-  // 1. Seed Masters
-  const mastersData = [
-    { name: 'Анастасія', isActive: true },
-    { name: 'Олена', isActive: true },
-    { name: 'Марина', isActive: true },
+  // 1. Seed Default Manager User
+  const managerPassword = await bcrypt.hash('manager123', 10);
+  const managerUser = await prisma.user.upsert({
+    where: { email: 'manager@leleya.ua' },
+    update: {
+      password: managerPassword,
+      name: 'Адміністратор Лелея',
+      role: Role.MANAGER,
+    },
+    create: {
+      email: 'manager@leleya.ua',
+      password: managerPassword,
+      name: 'Адміністратор Лелея',
+      role: Role.MANAGER,
+    },
+  });
+
+  // 2. Seed Barber Users & Link to Masters
+  const barberPassword = await bcrypt.hash('barber123', 10);
+  const barbers = [
+    { email: 'anastasia@leleya.ua', name: 'Анастасія' },
+    { email: 'olena@leleya.ua', name: 'Олена' },
+    { email: 'maryna@leleya.ua', name: 'Марина' },
   ];
 
-  for (const master of mastersData) {
-    const existing = await prisma.master.findFirst({ where: { name: master.name } });
-    if (!existing) {
-      await prisma.master.create({ data: master });
+  for (const b of barbers) {
+    const user = await prisma.user.upsert({
+      where: { email: b.email },
+      update: {
+        password: barberPassword,
+        name: b.name,
+        role: Role.BARBER,
+      },
+      create: {
+        email: b.email,
+        password: barberPassword,
+        name: b.name,
+        role: Role.BARBER,
+      },
+    });
+
+    const existingMaster = await prisma.master.findFirst({ where: { name: b.name } });
+    if (existingMaster) {
+      await prisma.master.update({
+        where: { id: existingMaster.id },
+        data: { userId: user.id },
+      });
+    } else {
+      await prisma.master.create({
+        data: {
+          name: b.name,
+          isActive: true,
+          userId: user.id,
+        },
+      });
     }
   }
 
-  // 2. Seed Services Catalog
+  // 3. Seed Services Catalog
   const servicesData = [
     // Men's Haircuts
     { id: 'm1', name: '«Під нуль»', category: 'men', price: '150 грн', priceValue: 150, duration: 30 },
@@ -50,23 +94,6 @@ async function main() {
       create: s,
     });
   }
-
-  // 3. Seed Default Manager User
-  const managerPassword = await bcrypt.hash('manager123', 10);
-  await prisma.user.upsert({
-    where: { email: 'manager@leleya.ua' },
-    update: {
-      password: managerPassword,
-      name: 'Адміністратор Лелея',
-      role: Role.MANAGER,
-    },
-    create: {
-      email: 'manager@leleya.ua',
-      password: managerPassword,
-      name: 'Адміністратор Лелея',
-      role: Role.MANAGER,
-    },
-  });
 
   console.log('✅ Database seeding finished successfully!');
 }
