@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   Button,
+  Avatar,
 } from '@mui/material';
 import {
   AttachMoney,
@@ -17,11 +18,12 @@ import {
   People,
   TrendingUp,
   ReceiptLong,
-  CalendarToday,
   Refresh,
+  Visibility,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { financeApi, FinanceSummary, MasterBreakdown } from '../../api/financeApi';
+import { financeApi, FinanceSummary, MasterBreakdown, MasterDetailsResponse } from '../../api/financeApi';
+import MasterDetailModal from './MasterDetailModal';
 
 export const FinanceTab: React.FC = () => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'custom'>('month');
@@ -32,6 +34,12 @@ export const FinanceTab: React.FC = () => {
   const [breakdown, setBreakdown] = useState<MasterBreakdown[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal State for Master Details
+  const [selectedMasterId, setSelectedMasterId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [masterDetails, setMasterDetails] = useState<MasterDetailsResponse | null>(null);
+  const [modalLoading, setModalLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchData();
@@ -62,9 +70,22 @@ export const FinanceTab: React.FC = () => {
     }
   };
 
-  const handleApplyCustomDates = () => {
-    if (period === 'custom') {
-      fetchData();
+  const handleOpenMasterDetails = async (masterId: string) => {
+    setSelectedMasterId(masterId);
+    setIsModalOpen(true);
+    setModalLoading(true);
+    try {
+      const params = {
+        period,
+        startDate: period === 'custom' ? startDate : undefined,
+        endDate: period === 'custom' ? endDate : undefined,
+      };
+      const res = await financeApi.getMasterDetails(masterId, params);
+      setMasterDetails(res);
+    } catch (err) {
+      console.error('Error fetching master details:', err);
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -81,11 +102,11 @@ export const FinanceTab: React.FC = () => {
       <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-xs uppercase tracking-widest text-gold-500 font-semibold block mb-1">
-            Аналітика та Виплати
+            Фінанси та звітність
           </span>
           <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
             <TrendingUp className="text-gold-400" />
-            <span>Фінансовий Звіт Перукарні</span>
+            <span>Аналітика виручки та виплат</span>
           </h2>
         </div>
 
@@ -110,7 +131,7 @@ export const FinanceTab: React.FC = () => {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Цей тиждень
+              Поточний тиждень
             </button>
             <button
               onClick={() => setPeriod('month')}
@@ -152,7 +173,7 @@ export const FinanceTab: React.FC = () => {
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleApplyCustomDates}
+                onClick={fetchData}
                 style={{
                   backgroundColor: '#C59A77',
                   color: '#0C0C0E',
@@ -194,121 +215,133 @@ export const FinanceTab: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* KPI CARDS GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* KEY FINANCIAL KPI CARDS (TOP ROW) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             
             {/* Card 1: Total Revenue (100%) */}
-            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-gold-400 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-gold-400 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                   Загальна каса (100%)
                 </span>
-                <div className="w-9 h-9 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
                   <AttachMoney className="text-gold-400" />
                 </div>
               </div>
-              <span className="text-3xl font-serif font-bold text-white block">
-                {summary?.totalRevenue.toLocaleString() || 0} <span className="text-lg text-gold-400">грн</span>
+              <span className="text-2xl font-serif font-bold text-white block">
+                ₴ {summary?.totalRevenue.toLocaleString() || 0}
               </span>
-              <p className="text-[11px] text-gray-400 mt-2">
-                Загальний виторг від усіх виконаних стрижок
-              </p>
+              <p className="text-[10px] text-gray-400 mt-1">100% всієї виручки</p>
             </div>
 
-            {/* Card 2: Salon Net Profit (60%) */}
-            <div className="bg-dark-900 border border-gold-600/40 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-emerald-400 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+            {/* Card 2: Salon Net Profit (60%) - Highlighted #C59A77 */}
+            <div className="bg-dark-900 border-2 border-gold-500/80 rounded-2xl p-5 shadow-gold-sm relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-gold-400 uppercase tracking-wider">
                   Прибуток перукарні (60%)
                 </span>
-                <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                  <AccountBalanceWallet className="text-emerald-400" />
+                <div className="w-8 h-8 rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center">
+                  <AccountBalanceWallet className="text-gold-400" />
                 </div>
               </div>
-              <span className="text-3xl font-serif font-bold text-emerald-300 block">
-                {summary?.salonProfit.toLocaleString() || 0} <span className="text-lg">грн</span>
+              <span className="text-2xl font-serif font-bold text-gold-400 block">
+                ₴ {summary?.salonProfit.toLocaleString() || 0}
               </span>
-              <p className="text-[11px] text-gray-400 mt-2">
-                Чиста частка закладу після виплати майстрам
+              <p className="text-[10px] text-gold-400/80 mt-1 font-medium">
+                Чиста частка закладу
               </p>
             </div>
 
-            {/* Card 3: Barber Payouts (40%) */}
-            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-amber-400 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                  Виплати майстрам (40%)
+            {/* Card 3: Barber Payouts (40%) - Highlighted Green */}
+            <div className="bg-dark-900 border border-emerald-500/40 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-emerald-400 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                  Фонд виплат майстрам (40%)
                 </span>
-                <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                  <People className="text-amber-400" />
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                  <People className="text-emerald-400" />
                 </div>
               </div>
-              <span className="text-3xl font-serif font-bold text-amber-300 block">
-                {summary?.barberPayouts.toLocaleString() || 0} <span className="text-lg">грн</span>
+              <span className="text-2xl font-serif font-bold text-emerald-400 block">
+                ₴ {summary?.barberPayouts.toLocaleString() || 0}
               </span>
-              <p className="text-[11px] text-gray-400 mt-2">
-                Сукупна комісія перукарів за виконану роботу
-              </p>
+              <p className="text-[10px] text-gray-400 mt-1">Виплати майстрам</p>
             </div>
 
-            {/* Card 4: Orders & Average Check */}
-            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-gold-400 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            {/* Card 4: Total Completed Orders */}
+            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-gold-400 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                   Виконано замовлень
                 </span>
-                <div className="w-9 h-9 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
                   <ReceiptLong className="text-gold-400" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-serif font-bold text-white">
-                  {summary?.totalCompletedOrders || 0}
+              <span className="text-2xl font-serif font-bold text-white block">
+                {summary?.totalCompletedOrders || 0} <span className="text-xs text-gray-400 font-sans font-normal">стрижок</span>
+              </span>
+              <p className="text-[10px] text-gray-400 mt-1">Кількість замовлень</p>
+            </div>
+
+            {/* Card 5: Average Check */}
+            <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-gold-400 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  Середній чек
                 </span>
-                <span className="text-xs text-gray-400">замовлень</span>
+                <div className="w-8 h-8 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
+                  <TrendingUp className="text-gold-400" />
+                </div>
               </div>
-              <p className="text-[11px] text-gold-400 mt-2 font-medium">
-                Середній чек: <strong className="text-white">{summary?.averageCheck || 0} грн</strong>
-              </p>
+              <span className="text-2xl font-serif font-bold text-white block">
+                ₴ {summary?.averageCheck || 0}
+              </span>
+              <p className="text-[10px] text-gray-400 mt-1">Середня вартість стрижки</p>
             </div>
 
           </div>
 
-          {/* TABLE: MASTERS PERFORMANCE BREAKDOWN */}
+          {/* TABLE: MASTERS PERFORMANCE TABLE */}
           <div className="bg-dark-900 border border-gold-600/30 rounded-2xl p-6 shadow-xl">
-            <div className="mb-6">
-              <h3 className="font-serif text-xl font-bold text-white flex items-center gap-2">
-                <People className="text-gold-400" />
-                <span>Розподіл виручки по перукарях</span>
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Детальний розрахунок заробітку кожного майстра (40%) та доходу салону (60%)
-              </p>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+                  <People className="text-gold-400" />
+                  <span>Таблиця ефективності майстрів</span>
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Облік виконаних замовлень та розподіл виплат перукарям (40%) і салону (60%)
+                </p>
+              </div>
             </div>
 
             <TableContainer component={Paper} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
               <Table>
                 <TableHead>
                   <TableRow style={{ borderBottom: '1px solid rgba(197, 154, 119, 0.3)' }}>
-                    <TableCell style={{ color: '#C59A77', fontWeight: 'bold' }}>Майстер перукарні</TableCell>
+                    <TableCell style={{ color: '#C59A77', fontWeight: 'bold' }}>Майстер</TableCell>
                     <TableCell align="center" style={{ color: '#C59A77', fontWeight: 'bold' }}>
                       Виконано стрижок
                     </TableCell>
                     <TableCell align="right" style={{ color: '#C59A77', fontWeight: 'bold' }}>
-                      Згенерована каса (100%)
+                      Загальна каса майстра (₴)
                     </TableCell>
-                    <TableCell align="right" style={{ color: '#16A34A', fontWeight: 'bold' }}>
-                      Заробіток майстра (40%)
+                    <TableCell align="right" style={{ color: '#4ADE80', fontWeight: 'bold' }}>
+                      До виплати майстру (40%)
                     </TableCell>
                     <TableCell align="right" style={{ color: '#38BDF8', fontWeight: 'bold' }}>
-                      Частка салону (60%)
+                      Частка перукарні (60%)
+                    </TableCell>
+                    <TableCell align="center" style={{ color: '#C59A77', fontWeight: 'bold' }}>
+                      Дії
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {breakdown.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" style={{ color: '#9CA3AF', padding: '32px' }}>
+                      <TableCell colSpan={6} align="center" style={{ color: '#9CA3AF', padding: '32px' }}>
                         За вибраний період completed-замовлень не знайдено
                       </TableCell>
                     </TableRow>
@@ -319,22 +352,66 @@ export const FinanceTab: React.FC = () => {
                         style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
                         className="hover:bg-dark-850/50 transition-colors"
                       >
+                        {/* Master Avatar + Name */}
                         <TableCell style={{ color: '#FFFFFF', fontWeight: '600' }}>
-                          ✂️ {row.masterName}
+                          <div className="flex items-center gap-3">
+                            <Avatar
+                              style={{
+                                backgroundColor: '#18181B',
+                                border: '1px solid #C59A77',
+                                color: '#C59A77',
+                                width: 36,
+                                height: 36,
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                              }}
+                            >
+                              {row.masterName.charAt(0)}
+                            </Avatar>
+                            <span className="text-sm">{row.masterName}</span>
+                          </div>
                         </TableCell>
+
+                        {/* Completed Cuts Count */}
                         <TableCell align="center" style={{ color: '#E5E7EB' }}>
-                          <span className="px-2.5 py-1 rounded-md bg-dark-950 border border-gray-800 font-bold text-xs">
-                            {row.completedOrdersCount}
+                          <span className="px-3 py-1 rounded-lg bg-dark-950 border border-gold-600/20 font-bold text-xs">
+                            {row.completedOrdersCount} стрижок
                           </span>
                         </TableCell>
+
+                        {/* Total Master Generated Revenue */}
                         <TableCell align="right" style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
-                          {row.totalGeneratedRevenue.toLocaleString()} грн
+                          ₴ {row.totalGeneratedRevenue.toLocaleString()}
                         </TableCell>
+
+                        {/* Master Payout 40% (Green) */}
                         <TableCell align="right" style={{ color: '#4ADE80', fontWeight: 'bold' }}>
-                          +{row.masterEarnings.toLocaleString()} грн
+                          +₴ {row.masterEarnings.toLocaleString()}
                         </TableCell>
+
+                        {/* Salon Share 60% */}
                         <TableCell align="right" style={{ color: '#38BDF8', fontWeight: 'bold' }}>
-                          +{row.salonShareFromMaster.toLocaleString()} грн
+                          +₴ {row.salonShareFromMaster.toLocaleString()}
+                        </TableCell>
+
+                        {/* Action Button: Details Modal */}
+                        <TableCell align="center">
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => handleOpenMasterDetails(row.masterId)}
+                            startIcon={<Visibility style={{ fontSize: '14px' }} />}
+                            style={{
+                              borderColor: 'rgba(197, 154, 119, 0.4)',
+                              color: '#C59A77',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              borderRadius: '8px',
+                              textTransform: 'none',
+                            }}
+                          >
+                            Детальніше
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -342,22 +419,23 @@ export const FinanceTab: React.FC = () => {
 
                   {/* Summary Totals Row */}
                   {breakdown.length > 0 && (
-                    <TableRow style={{ borderTop: '2px solid rgba(197, 154, 119, 0.4)', backgroundColor: 'rgba(12, 12, 14, 0.8)' }}>
+                    <TableRow style={{ borderTop: '2px solid rgba(197, 154, 119, 0.4)', backgroundColor: 'rgba(12, 12, 14, 0.9)' }}>
                       <TableCell style={{ color: '#C59A77', fontWeight: 'extrabold', fontSize: '14px' }}>
-                        Всього по салону:
+                        Разом по усім майстрам:
                       </TableCell>
                       <TableCell align="center" style={{ color: '#FFFFFF', fontWeight: 'extrabold', fontSize: '14px' }}>
-                        {totalOrdersAll}
+                        {totalOrdersAll} стрижок
                       </TableCell>
                       <TableCell align="right" style={{ color: '#FFFFFF', fontWeight: 'extrabold', fontSize: '15px' }}>
-                        {totalRevenueAll.toLocaleString()} грн
+                        ₴ {totalRevenueAll.toLocaleString()}
                       </TableCell>
                       <TableCell align="right" style={{ color: '#4ADE80', fontWeight: 'extrabold', fontSize: '15px' }}>
-                        +{totalEarningsAll.toLocaleString()} грн
+                        +₴ {totalEarningsAll.toLocaleString()}
                       </TableCell>
                       <TableCell align="right" style={{ color: '#38BDF8', fontWeight: 'extrabold', fontSize: '15px' }}>
-                        +{totalSalonShareAll.toLocaleString()} грн
+                        +₴ {totalSalonShareAll.toLocaleString()}
                       </TableCell>
+                      <TableCell align="center" />
                     </TableRow>
                   )}
                 </TableBody>
@@ -366,6 +444,18 @@ export const FinanceTab: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* Itemized Cuts Modal for Selected Master */}
+      <MasterDetailModal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedMasterId(null);
+          setMasterDetails(null);
+        }}
+        loading={modalLoading}
+        details={masterDetails}
+      />
 
     </div>
   );

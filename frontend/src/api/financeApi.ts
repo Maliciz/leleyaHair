@@ -20,6 +20,26 @@ export interface MasterBreakdown {
   salonShareFromMaster: number;
 }
 
+export interface ItemizedMasterBooking {
+  id: string;
+  clientName: string;
+  clientPhone: string;
+  date: string;
+  timeSlot: string;
+  serviceName: string;
+  priceValue: number;
+  masterShare: number;
+  salonShare: number;
+}
+
+export interface MasterDetailsResponse {
+  masterId: string;
+  masterName: string;
+  startDate: string;
+  endDate: string;
+  bookings: ItemizedMasterBooking[];
+}
+
 export interface FinanceQueryParams {
   period?: 'today' | 'week' | 'month' | 'custom';
   startDate?: string;
@@ -36,6 +56,12 @@ export const financeApi = {
   // Get master performance breakdown
   async getMastersBreakdown(params?: FinanceQueryParams): Promise<MasterBreakdown[]> {
     const response = await apiClient.get('/admin/finance/masters-breakdown', { params });
+    return response.data;
+  },
+
+  // Get itemized completed cuts for a master
+  async getMasterDetails(masterId: string, params?: FinanceQueryParams): Promise<MasterDetailsResponse> {
+    const response = await apiClient.get(`/admin/finance/master-details/${masterId}`, { params });
     return response.data;
   },
 };

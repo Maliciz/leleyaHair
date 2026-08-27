@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingStatus } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -120,5 +120,51 @@ export class FinanceService {
         salonShareFromMaster,
       };
     });
+  }
+
+  // GET /api/admin/finance/master-details/:masterId
+  async getMasterBookingsDetails(masterId: string, params: FinanceQueryParams) {
+    const { startStr, endStr } = this.getDateRange(params);
+
+    const master = await this.prisma.master.findUnique({
+      where: { id: masterId },
+    });
+
+    if (!master) {
+      throw new NotFoundException('Майстра не знайдено');
+    }
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        masterId: master.id,
+        status: BookingStatus.COMPLETED,
+        date: {
+          gte: startStr,
+          lte: endStr,
+        },
+      },
+      include: {
+        service: true,
+      },
+      orderBy: [{ date: 'desc' }, { timeSlot: 'asc' }],
+    });
+
+    return {
+      masterId: master.id,
+      masterName: master.name,
+      startDate: startStr,
+      endDate: endStr,
+      bookings: bookings.map((b) => ({
+        id: b.id,
+        clientName: b.clientName,
+        clientPhone: b.clientPhone,
+        date: b.date,
+        timeSlot: b.timeSlot,
+        serviceName: b.service?.name || 'Стрижка',
+        priceValue: b.service?.priceValue || 0,
+        masterShare: Math.round((b.service?.priceValue || 0) * 0.40),
+        salonShare: Math.round((b.service?.priceValue || 0) * 0.60),
+      })),
+    };
   }
 }
