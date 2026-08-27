@@ -2,7 +2,7 @@ import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreateBookingDto {
   @IsString({ message: 'Імʼя має бути строкою' })
-  @IsNotEmpty({ message: 'Введіть ваші імʼя та прізвище' })
+  @IsNotEmpty({ message: 'Введіть імʼя клієнта' })
   clientName: string;
 
   @IsString({ message: 'Номер телефону має бути строкою' })
@@ -12,8 +12,8 @@ export class CreateBookingDto {
   })
   clientPhone: string;
 
-  @IsString({ message: 'Оберіть послугу' })
-  @IsNotEmpty({ message: 'Ідентифікатор послуги обовʼязковий' })
+  @IsString()
+  @IsNotEmpty({ message: 'Оберіть послугу' })
   serviceId: string;
 
   @IsString()
@@ -28,5 +28,9 @@ export class CreateBookingDto {
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  comment?: string;
+
+  @IsOptional()
+  @IsString()
+  masterId?: string;
 }
