@@ -17,6 +17,20 @@ export class BarberService {
     return master;
   }
 
+  /**
+   * Helper to safely extract numeric price value from booking service to prevent NaN issues
+   */
+  private getBookingPrice(b: any): number {
+    if (typeof b.service?.priceValue === 'number' && !isNaN(b.service.priceValue)) {
+      return Number(b.service.priceValue);
+    }
+    if (b.service?.price) {
+      const parsed = parseInt(String(b.service.price).replace(/\D/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) return Number(parsed);
+    }
+    return 0;
+  }
+
   // GET /api/barber/my-schedule
   async getMySchedule(userId: string) {
     const master = await this.getMasterForUser(userId);
@@ -70,6 +84,7 @@ export class BarberService {
       where: whereClause,
       include: {
         service: true,
+        master: true,
       },
       orderBy: [
         { date: 'asc' },
@@ -96,7 +111,7 @@ export class BarberService {
     return this.prisma.booking.update({
       where: { id: bookingId },
       data: { status: BookingStatus.COMPLETED },
-      include: { service: true },
+      include: { service: true, master: true },
     });
   }
 
@@ -109,7 +124,7 @@ export class BarberService {
         masterId: master.id,
         status: BookingStatus.COMPLETED,
       },
-      include: { service: true },
+      include: { service: true, master: true },
     });
 
     const now = dayjs();
@@ -125,7 +140,7 @@ export class BarberService {
     }
 
     const totalCompletedCount = filteredBookings.length;
-    const totalRevenue = filteredBookings.reduce((sum, b) => sum + (b.service?.priceValue || 0), 0);
+    const totalRevenue = filteredBookings.reduce((sum, b) => sum + this.getBookingPrice(b), 0);
     const barberPayout = Math.round(totalRevenue * 0.40);
 
     return {

@@ -8,7 +8,6 @@ import BookingDetailModal from './BookingDetailModal';
 import FinanceTab from './FinanceTab';
 import { exportBookingsToExcel } from '../../utils/excelExportUtility';
 import {
-  Scissors,
   LogOut,
   Calendar,
   Clock,
@@ -25,13 +24,14 @@ import {
   BookOpen,
   FileSpreadsheet,
 } from 'lucide-react';
-import { Chip, MenuItem, Select, Tabs, Tab, Box, Button } from '@mui/material';
+import { Chip, MenuItem, Select, Tabs, Tab, Box } from '@mui/material';
 
 export const AdminDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [bookings, setBookings] = useState<AdminBookingItem[]>([]);
   const [masters, setMasters] = useState<MasterItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [financeRefreshKey, setFinanceRefreshKey] = useState<number>(0);
 
   // Filters State
   const todayStr = new Date().toISOString().split('T')[0];
@@ -87,6 +87,7 @@ export const AdminDashboardPage: React.FC = () => {
   const handleQuickStatusChange = async (id: string, newStatus: string) => {
     try {
       await adminApi.updateBookingStatus(id, newStatus);
+      setFinanceRefreshKey((prev) => prev + 1);
       fetchBookings();
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -96,6 +97,7 @@ export const AdminDashboardPage: React.FC = () => {
   const handleAssignMaster = async (bookingId: string, masterId: string) => {
     try {
       await adminApi.assignMaster(bookingId, masterId);
+      setFinanceRefreshKey((prev) => prev + 1);
       fetchBookings();
     } catch (err) {
       console.error('Failed to assign master:', err);
@@ -107,6 +109,7 @@ export const AdminDashboardPage: React.FC = () => {
     updates: { status?: string; masterId?: string; comment?: string }
   ) => {
     await adminApi.updateBookingDetails(id, updates);
+    setFinanceRefreshKey((prev) => prev + 1);
     fetchBookings();
   };
 
@@ -193,7 +196,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        
+
         {/* Navigation Tabs (Bookings vs Finance) */}
         <Box sx={{ borderBottom: 1, borderColor: 'rgba(197, 154, 119, 0.2)' }}>
           <Tabs
@@ -210,8 +213,8 @@ export const AdminDashboardPage: React.FC = () => {
               },
             }}
           >
-            <Tab icon={<BookOpen className="w-4 h-4 mr-2" />} iconPosition="start" label="📅 Записи та Замовлення" />
-            <Tab icon={<TrendingUp className="w-4 h-4 mr-2" />} iconPosition="start" label="💰 Фінанси та Виплати" />
+            <Tab icon={<BookOpen className="w-4 h-4 mr-2" />} iconPosition="start" label="Записи та Замовлення" />
+            <Tab icon={<TrendingUp className="w-4 h-4 mr-2" />} iconPosition="start" label="Фінанси та Виплати" />
           </Tabs>
         </Box>
 
@@ -274,33 +277,30 @@ export const AdminDashboardPage: React.FC = () => {
                   </span>
                   <button
                     onClick={() => setSelectedDate(todayStr)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      selectedDate === todayStr
-                        ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
-                        : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedDate === todayStr
+                      ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
+                      : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
+                      }`}
                   >
                     Сьогодні
                   </button>
 
                   <button
                     onClick={() => setSelectedDate(tomorrowStr)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      selectedDate === tomorrowStr
-                        ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
-                        : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedDate === tomorrowStr
+                      ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
+                      : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
+                      }`}
                   >
                     Завтра
                   </button>
 
                   <button
                     onClick={() => setSelectedDate('ALL_DATES')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      selectedDate === 'ALL_DATES'
-                        ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
-                        : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedDate === 'ALL_DATES'
+                      ? 'bg-gold-gradient text-dark-950 shadow-gold-sm'
+                      : 'bg-dark-950 border border-gold-600/20 text-gray-300 hover:border-gold-500'
+                      }`}
                   >
                     Всі дати
                   </button>
@@ -355,11 +355,10 @@ export const AdminDashboardPage: React.FC = () => {
                     <button
                       key={st.key}
                       onClick={() => setSelectedStatus(st.key)}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                        selectedStatus === st.key
-                          ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
-                          : 'text-gray-400 hover:text-white'
-                      }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${selectedStatus === st.key
+                        ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
                     >
                       {st.label}
                     </button>
@@ -496,10 +495,20 @@ export const AdminDashboardPage: React.FC = () => {
                           {/* Action Buttons */}
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
+                              {b.status !== 'COMPLETED' && (
+                                <button
+                                  onClick={() => handleQuickStatusChange(b.id, 'COMPLETED')}
+                                  className="p-1.5 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60 transition-colors"
+                                  title="Позначити як виконано (COMPLETED)"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
                               {b.status === 'PENDING' && (
                                 <button
                                   onClick={() => handleQuickStatusChange(b.id, 'CONFIRMED')}
-                                  className="p-1.5 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60 transition-colors"
+                                  className="p-1.5 rounded-lg bg-blue-900/30 border border-blue-500/40 text-blue-400 hover:bg-blue-900/60 transition-colors"
                                   title="Підтвердити запис"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -539,7 +548,7 @@ export const AdminDashboardPage: React.FC = () => {
         )}
 
         {/* TAB 1: FINANCIAL & REVENUE MANAGEMENT */}
-        {activeTab === 1 && <FinanceTab />}
+        {activeTab === 1 && <FinanceTab key={financeRefreshKey} />}
 
       </main>
 

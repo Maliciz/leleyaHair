@@ -42,6 +42,20 @@ export class FinanceService {
     return { startStr: today, endStr: today };
   }
 
+  /**
+   * Helper to safely extract numeric price value from booking service to prevent NaN issues
+   */
+  private getBookingPrice(b: any): number {
+    if (typeof b.service?.priceValue === 'number' && !isNaN(b.service.priceValue)) {
+      return Number(b.service.priceValue);
+    }
+    if (b.service?.price) {
+      const parsed = parseInt(String(b.service.price).replace(/\D/g, ''), 10);
+      if (!isNaN(parsed) && parsed > 0) return Number(parsed);
+    }
+    return 0;
+  }
+
   // GET /api/admin/finance/summary
   async getFinanceSummary(params: FinanceQueryParams) {
     const { startStr, endStr } = this.getDateRange(params);
@@ -56,12 +70,13 @@ export class FinanceService {
       },
       include: {
         service: true,
+        master: true,
       },
     });
 
     const totalCompletedOrders = completedBookings.length;
     const totalRevenue = completedBookings.reduce(
-      (sum, b) => sum + (b.service?.priceValue || 0),
+      (sum, b) => sum + this.getBookingPrice(b),
       0,
     );
     const barberPayouts = Math.round(totalRevenue * 0.40);
@@ -98,6 +113,7 @@ export class FinanceService {
       },
       include: {
         service: true,
+        master: true,
       },
     });
 
@@ -105,7 +121,7 @@ export class FinanceService {
       const masterBookings = completedBookings.filter((b) => b.masterId === master.id);
       const completedOrdersCount = masterBookings.length;
       const totalGeneratedRevenue = masterBookings.reduce(
-        (sum, b) => sum + (b.service?.priceValue || 0),
+        (sum, b) => sum + this.getBookingPrice(b),
         0,
       );
       const masterEarnings = Math.round(totalGeneratedRevenue * 0.40);
@@ -145,6 +161,7 @@ export class FinanceService {
       },
       include: {
         service: true,
+        master: true,
       },
       orderBy: [{ date: 'desc' }, { timeSlot: 'asc' }],
     });
@@ -154,17 +171,23 @@ export class FinanceService {
       masterName: master.name,
       startDate: startStr,
       endDate: endStr,
-      bookings: bookings.map((b) => ({
-        id: b.id,
-        clientName: b.clientName,
-        clientPhone: b.clientPhone,
-        date: b.date,
-        timeSlot: b.timeSlot,
-        serviceName: b.service?.name || 'Стрижка',
-        priceValue: b.service?.priceValue || 0,
-        masterShare: Math.round((b.service?.priceValue || 0) * 0.40),
-        salonShare: Math.round((b.service?.priceValue || 0) * 0.60),
-      })),
+      bookings: bookings.map((b) => {
+        const priceVal = this.getBookingPrice(b);
+        const masterShare = Math.round(priceVal * 0.40);
+        const salonShare = priceVal - masterShare;
+
+        return {
+          id: b.id,
+          clientName: b.clientName,
+          clientPhone: b.clientPhone,
+          date: b.date,
+          timeSlot: b.timeSlot,
+          serviceName: b.service?.name || 'Стрижка',
+          priceValue: priceVal,
+          masterShare,
+          salonShare,
+        };
+      }),
     };
   }
 
@@ -187,17 +210,21 @@ export class FinanceService {
       orderBy: [{ date: 'desc' }, { timeSlot: 'asc' }],
     });
 
-    return bookings.map((b) => ({
-      id: b.id,
-      date: b.date,
-      timeSlot: b.timeSlot,
-      clientName: b.clientName,
-      clientPhone: b.clientPhone,
-      serviceName: b.service?.name || 'Стрижка',
-      priceValue: b.service?.priceValue || 0,
-      masterName: b.master?.name || 'Не призначено',
-      masterShare: Math.round((b.service?.priceValue || 0) * 0.40),
-      status: b.status,
-    }));
+    return bookings.map((b) => {
+      const priceVal = this.getBookingPrice(b);
+
+      return {
+        id: b.id,
+        date: b.date,
+        timeSlot: b.timeSlot,
+        clientName: b.clientName,
+        clientPhone: b.clientPhone,
+        serviceName: b.service?.name || 'Стрижка',
+        priceValue: priceVal,
+        masterName: b.master?.name || 'Не призначено',
+        masterShare: Math.round(priceVal * 0.40),
+        status: b.status,
+      };
+    });
   }
 }
