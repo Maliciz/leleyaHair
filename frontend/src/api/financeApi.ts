@@ -32,6 +32,19 @@ export interface ItemizedMasterBooking {
   salonShare: number;
 }
 
+export interface PeriodBookingDetail {
+  id: string;
+  date: string;
+  timeSlot: string;
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  priceValue: number;
+  masterName: string;
+  masterShare: number;
+  status: string;
+}
+
 export interface MasterDetailsResponse {
   masterId: string;
   masterName: string;
@@ -62,6 +75,12 @@ export const financeApi = {
   // Get itemized completed cuts for a master
   async getMasterDetails(masterId: string, params?: FinanceQueryParams): Promise<MasterDetailsResponse> {
     const response = await apiClient.get(`/admin/finance/master-details/${masterId}`, { params });
+    return response.data;
+  },
+
+  // Get all completed bookings for the selected period
+  async getAllPeriodDetails(params?: FinanceQueryParams): Promise<PeriodBookingDetail[]> {
+    const response = await apiClient.get('/admin/finance/period-details', { params });
     return response.data;
   },
 };

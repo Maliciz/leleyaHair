@@ -167,4 +167,37 @@ export class FinanceService {
       })),
     };
   }
+
+  // GET /api/admin/finance/period-details
+  async getAllPeriodBookingsDetails(params: FinanceQueryParams) {
+    const { startStr, endStr } = this.getDateRange(params);
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        status: BookingStatus.COMPLETED,
+        date: {
+          gte: startStr,
+          lte: endStr,
+        },
+      },
+      include: {
+        service: true,
+        master: true,
+      },
+      orderBy: [{ date: 'desc' }, { timeSlot: 'asc' }],
+    });
+
+    return bookings.map((b) => ({
+      id: b.id,
+      date: b.date,
+      timeSlot: b.timeSlot,
+      clientName: b.clientName,
+      clientPhone: b.clientPhone,
+      serviceName: b.service?.name || 'Стрижка',
+      priceValue: b.service?.priceValue || 0,
+      masterName: b.master?.name || 'Не призначено',
+      masterShare: Math.round((b.service?.priceValue || 0) * 0.40),
+      status: b.status,
+    }));
+  }
 }

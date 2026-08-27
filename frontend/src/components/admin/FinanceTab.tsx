@@ -20,10 +20,12 @@ import {
   ReceiptLong,
   Refresh,
   Visibility,
+  FileDownload,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { financeApi, FinanceSummary, MasterBreakdown, MasterDetailsResponse } from '../../api/financeApi';
 import MasterDetailModal from './MasterDetailModal';
+import { exportFinancialReportToExcel } from '../../utils/excelExportUtility';
 
 export const FinanceTab: React.FC = () => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'custom'>('month');
@@ -33,6 +35,7 @@ export const FinanceTab: React.FC = () => {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [breakdown, setBreakdown] = useState<MasterBreakdown[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [exporting, setExporting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   // Modal State for Master Details
@@ -86,6 +89,25 @@ export const FinanceTab: React.FC = () => {
       console.error('Error fetching master details:', err);
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!summary) return;
+    setExporting(true);
+    try {
+      const params = {
+        period,
+        startDate: period === 'custom' ? startDate : undefined,
+        endDate: period === 'custom' ? endDate : undefined,
+      };
+      const periodDetails = await financeApi.getAllPeriodDetails(params);
+      exportFinancialReportToExcel(summary, breakdown, periodDetails);
+    } catch (err) {
+      console.error('Failed to export financial report:', err);
+      alert('Помилка формування файлу Excel');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -187,6 +209,25 @@ export const FinanceTab: React.FC = () => {
               </Button>
             </div>
           )}
+
+          {/* Prominent Excel Export Button */}
+          <Button
+            variant="contained"
+            onClick={handleExportExcel}
+            disabled={exporting || !summary}
+            startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <FileDownload />}
+            style={{
+              backgroundColor: '#16A34A',
+              color: '#FFFFFF',
+              fontWeight: 'bold',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              fontSize: '12px',
+              textTransform: 'none',
+            }}
+          >
+            {exporting ? 'Формування...' : 'Експортувати звіт в Excel'}
+          </Button>
 
           <Button
             variant="outlined"

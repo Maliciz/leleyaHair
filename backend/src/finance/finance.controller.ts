@@ -25,6 +25,15 @@ export class FinanceController {
     return this.financeService.getMastersBreakdown({ period, startDate, endDate });
   }
 
+  @Get('period-details')
+  async getAllPeriodBookingsDetails(
+    @Query('period') period?: 'today' | 'week' | 'month' | 'custom',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getAllPeriodBookingsDetails({ period, startDate, endDate });
+  }
+
   @Get('master-details/:masterId')
   async getMasterBookingsDetails(
     @Param('masterId') masterId: string,

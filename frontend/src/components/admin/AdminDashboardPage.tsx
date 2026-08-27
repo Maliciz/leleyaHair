@@ -6,6 +6,7 @@ import {
 } from '../../api/adminApi';
 import BookingDetailModal from './BookingDetailModal';
 import FinanceTab from './FinanceTab';
+import { exportBookingsToExcel } from '../../utils/excelExportUtility';
 import {
   Scissors,
   LogOut,
@@ -22,8 +23,9 @@ import {
   Check,
   TrendingUp,
   BookOpen,
+  FileSpreadsheet,
 } from 'lucide-react';
-import { Chip, MenuItem, Select, Tabs, Tab, Box } from '@mui/material';
+import { Chip, MenuItem, Select, Tabs, Tab, Box, Button } from '@mui/material';
 
 export const AdminDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -106,6 +108,10 @@ export const AdminDashboardPage: React.FC = () => {
   ) => {
     await adminApi.updateBookingDetails(id, updates);
     fetchBookings();
+  };
+
+  const handleExportBookingsExcel = () => {
+    exportBookingsToExcel(filteredBookings);
   };
 
   // Filtered Bookings by Search Query
@@ -308,14 +314,26 @@ export const AdminDashboardPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Refresh Button */}
-                <button
-                  onClick={fetchBookings}
-                  className="p-2 rounded-xl bg-dark-950 border border-gold-600/20 text-gold-400 hover:border-gold-500 transition-colors flex items-center justify-center gap-1.5 text-xs font-medium"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  <span>Оновити</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Export Bookings Excel Button */}
+                  <button
+                    onClick={handleExportBookingsExcel}
+                    className="px-3 py-2 rounded-xl bg-emerald-700/30 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-700/50 transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold"
+                    title="Завантажити вибрані записи в форматі Excel"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>Експорт записів (.xlsx)</span>
+                  </button>
+
+                  {/* Refresh Button */}
+                  <button
+                    onClick={fetchBookings}
+                    className="p-2 rounded-xl bg-dark-950 border border-gold-600/20 text-gold-400 hover:border-gold-500 transition-colors flex items-center justify-center gap-1.5 text-xs font-medium"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    <span>Оновити</span>
+                  </button>
+                </div>
               </div>
 
               {/* Status Tabs & Search Bar */}
