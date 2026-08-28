@@ -1,5 +1,6 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { MastersService } from './masters.service';
+import { CreateMasterDto } from './dto/create-master.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('api/admin/masters')
@@ -10,5 +11,17 @@ export class MastersController {
   @Get()
   async getMasters() {
     return this.mastersService.getAllMasters();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async createMaster(@Body() dto: CreateMasterDto) {
+    return this.mastersService.createMaster(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/toggle-status')
+  async toggleMasterStatus(@Param('id') id: string) {
+    return this.mastersService.toggleMasterStatus(id);
   }
 }

@@ -5,8 +5,10 @@ import {
   MasterItem,
 } from '../../api/adminApi';
 import BookingDetailModal from './BookingDetailModal';
+import RescheduleModal from './RescheduleModal';
 import FinanceTab from './FinanceTab';
 import InstagramTab from './InstagramTab';
+import MastersTab from './MastersTab';
 import { exportBookingsToExcel } from '../../utils/excelExportUtility';
 import {
   LogOut,
@@ -25,6 +27,7 @@ import {
   BookOpen,
   FileSpreadsheet,
   Instagram,
+  Scissors,
 } from 'lucide-react';
 import { Chip, MenuItem, Select, Tabs, Tab, Box } from '@mui/material';
 
@@ -44,6 +47,10 @@ export const AdminDashboardPage: React.FC = () => {
   // Selected Booking for Modal
   const [activeBooking, setActiveBooking] = useState<AdminBookingItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Reschedule Modal State
+  const [rescheduleBookingTarget, setRescheduleBookingTarget] = useState<AdminBookingItem | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState<boolean>(false);
 
   const fetchMasters = async () => {
     try {
@@ -115,6 +122,11 @@ export const AdminDashboardPage: React.FC = () => {
     fetchBookings();
   };
 
+  const handleRescheduleSuccess = () => {
+    setFinanceRefreshKey((prev) => prev + 1);
+    fetchBookings();
+  };
+
   const handleExportBookingsExcel = () => {
     exportBookingsToExcel(filteredBookings);
   };
@@ -164,7 +176,7 @@ export const AdminDashboardPage: React.FC = () => {
             <h1 className="font-serif text-xl font-bold tracking-wide text-white">
               Панель керування — Перукарня «Лелея»
             </h1>
-            <p className="text-xs text-gold-400">Система управління онлайн-записами, фінансами та контентом</p>
+            <p className="text-xs text-gold-400">Система управління онлайн-записами, майстрами, фінансами та контентом</p>
           </div>
         </div>
 
@@ -216,6 +228,7 @@ export const AdminDashboardPage: React.FC = () => {
             }}
           >
             <Tab icon={<BookOpen className="w-4 h-4 mr-2" />} iconPosition="start" label="Записи та Замовлення" />
+            <Tab icon={<Scissors className="w-4 h-4 mr-2" />} iconPosition="start" label="Майстри / Перукарі" />
             <Tab icon={<TrendingUp className="w-4 h-4 mr-2" />} iconPosition="start" label="Фінанси та Виплати" />
             <Tab icon={<Instagram className="w-4 h-4 mr-2" />} iconPosition="start" label="Керування Instagram" />
           </Tabs>
@@ -498,6 +511,18 @@ export const AdminDashboardPage: React.FC = () => {
                           {/* Action Buttons */}
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
+                              {/* Reschedule Clock Button */}
+                              <button
+                                onClick={() => {
+                                  setRescheduleBookingTarget(b);
+                                  setIsRescheduleModalOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg bg-amber-900/30 border border-amber-500/40 text-amber-400 hover:bg-amber-900/60 transition-colors"
+                                title="Змінити час / перенести запис"
+                              >
+                                <Clock className="w-3.5 h-3.5" />
+                              </button>
+
                               {b.status !== 'COMPLETED' && (
                                 <button
                                   onClick={() => handleQuickStatusChange(b.id, 'COMPLETED')}
@@ -550,11 +575,14 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 1: FINANCIAL & REVENUE MANAGEMENT */}
-        {activeTab === 1 && <FinanceTab key={financeRefreshKey} />}
+        {/* TAB 1: MASTERS / BARBERS MANAGEMENT */}
+        {activeTab === 1 && <MastersTab />}
 
-        {/* TAB 2: INSTAGRAM CONTENT MANAGEMENT */}
-        {activeTab === 2 && <InstagramTab />}
+        {/* TAB 2: FINANCIAL & REVENUE MANAGEMENT */}
+        {activeTab === 2 && <FinanceTab key={financeRefreshKey} />}
+
+        {/* TAB 3: INSTAGRAM CONTENT MANAGEMENT */}
+        {activeTab === 3 && <InstagramTab />}
 
       </main>
 
@@ -568,6 +596,18 @@ export const AdminDashboardPage: React.FC = () => {
           setActiveBooking(null);
         }}
         onSave={handleSaveModalUpdates}
+      />
+
+      {/* Reschedule Modal */}
+      <RescheduleModal
+        open={isRescheduleModalOpen}
+        booking={rescheduleBookingTarget}
+        masters={masters}
+        onClose={() => {
+          setIsRescheduleModalOpen(false);
+          setRescheduleBookingTarget(null);
+        }}
+        onRescheduleSuccess={handleRescheduleSuccess}
       />
     </div>
   );

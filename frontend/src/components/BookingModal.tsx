@@ -11,24 +11,22 @@ import {
   TextField,
   CircularProgress,
   Alert,
-  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   CalendarMonth,
   AccessTime,
   Person,
-  Phone as PhoneIcon,
-  Notes as NotesIcon,
   CheckCircle,
   ContentCut,
   ArrowBack,
   ArrowForward,
+  AutoAwesome,
 } from '@mui/icons-material';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import confetti from 'canvas-confetti';
 import { ServiceCategory, ServiceItem, BookingConfirmation } from '../types';
-import { bookingsApi } from '../api/servicesApi';
+import { bookingsApi, AvailableMaster, SlotItem } from '../api/servicesApi';
 
 interface BookingModalProps {
   open: boolean;
@@ -76,14 +74,13 @@ const DEFAULT_CATEGORIES: ServiceCategory[] = [
   },
 ];
 
-const steps = ['Вибір послуги', 'Дата та час', 'Ваші дані', 'Підтвердження'];
+const steps = ['Вибір послуги', 'Майстер, дата та час', 'Ваші дані', 'Підтвердження'];
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   open,
   onClose,
   categories = DEFAULT_CATEGORIES,
   initialServiceId,
-  initialService,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
 
@@ -91,17 +88,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<'men' | 'women' | 'kids'>('men');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
+  const [selectedMasterId, setSelectedMasterId] = useState<string>('ANY');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
-  
+
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('+380');
   const [notes, setNotes] = useState('');
 
   // API State
+  const [loadingMasters, setLoadingMasters] = useState(false);
+  const [availableMasters, setAvailableMasters] = useState<AvailableMaster[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  
+  const [slotsData, setSlotsData] = useState<SlotItem[]>([]);
+
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
@@ -122,24 +121,53 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
   }, [initialServiceId, categories]);
 
-  // Fetch available slots when step 1 active or date changes
+  // Fetch available masters when selectedDate changes or step 1 active
   useEffect(() => {
     if (activeStep === 1 && selectedDate) {
-      fetchSlots(selectedDate);
+      fetchMastersForDate(selectedDate);
     }
   }, [activeStep, selectedDate]);
 
-  const fetchSlots = async (dateStr: string) => {
+  // Fetch available slots when date or master changes
+  useEffect(() => {
+    if (activeStep === 1 && selectedDate) {
+      fetchSlots(selectedDate, selectedMasterId);
+    }
+  }, [activeStep, selectedDate, selectedMasterId]);
+
+  const fetchMastersForDate = async (dateStr: string) => {
+    setLoadingMasters(true);
+    try {
+      const masters = await bookingsApi.getAvailableMasters(dateStr);
+      setAvailableMasters(masters || []);
+
+      if (selectedMasterId !== 'ANY' && !masters.some((m) => m.id === selectedMasterId)) {
+        setSelectedMasterId('ANY');
+      }
+    } catch (err) {
+      console.error('Error fetching masters for date', err);
+      setAvailableMasters([]);
+    } finally {
+      setLoadingMasters(false);
+    }
+  };
+
+  const fetchSlots = async (dateStr: string, masterId?: string) => {
     setLoadingSlots(true);
     setErrorMsg(null);
     try {
-      const slots = await bookingsApi.getAvailableSlots(dateStr);
-      setAvailableSlots(slots || []);
-      setBookedSlots([]);
-      
-      // Reset selected slot if no longer available
-      if (selectedTimeSlot && !slots.includes(selectedTimeSlot)) {
-        setSelectedTimeSlot('');
+      const res = await bookingsApi.getAvailableSlots(
+        dateStr,
+        masterId === 'ANY' ? undefined : masterId,
+        selectedService?.id
+      );
+      setSlotsData(res.availableSlots || []);
+
+      if (selectedTimeSlot) {
+        const match = res.availableSlots.find((s) => s.timeSlot === selectedTimeSlot);
+        if (!match || !match.isAvailable) {
+          setSelectedTimeSlot('');
+        }
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Не вдалося завантажити вільні слоти');
@@ -156,6 +184,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (activeStep === 1) {
       if (!selectedDate) {
         setErrorMsg('Будь ласка, оберіть дату');
+        return;
+      }
+      if (availableMasters.length === 0) {
+        setErrorMsg('На обрану дату немає працюючих майстрів. Будь ласка, оберіть інший день');
         return;
       }
       if (!selectedTimeSlot) {
@@ -189,7 +221,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (!val.startsWith('+380')) {
       val = '+380';
     }
-    // Only allow digits after +380
     const suffix = val.slice(4).replace(/\D/g, '').slice(0, 9);
     setClientPhone(`+380${suffix}`);
   };
@@ -206,6 +237,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         serviceId: selectedService.id,
         date: selectedDate,
         timeSlot: selectedTimeSlot,
+        masterId: selectedMasterId === 'ANY' ? undefined : selectedMasterId,
         comment: notes.trim(),
       });
 
@@ -217,7 +249,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         colors: ['#D4AF37', '#C59A77', '#E5C158', '#FFFFFF'],
       });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Помилка створення запису');
+      setErrorMsg(err.response?.data?.message || err.message || 'Помилка створення запису');
     } finally {
       setSubmitting(false);
     }
@@ -227,12 +259,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setActiveStep(0);
     setConfirmation(null);
     setErrorMsg(null);
+    setSelectedMasterId('ANY');
     setSelectedTimeSlot('');
     onClose();
   };
 
   const allItemsForCategory =
     categories.find((c) => c.id === selectedCategory)?.items || [];
+
+  const selectedMasterObj = availableMasters.find((m) => m.id === selectedMasterId);
 
   return (
     <Dialog
@@ -269,7 +304,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       </DialogTitle>
 
       <DialogContent className="p-6">
-        
         {/* Stepper Progress */}
         {!confirmation && (
           <div className="mb-8 mt-2">
@@ -297,7 +331,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <span>1. Оберіть категорію та послугу</span>
             </h4>
 
-            {/* Category selection tabs */}
+            {/* Category tabs */}
             <div className="flex gap-2 mb-6">
               {categories.map((cat) => (
                 <button
@@ -353,18 +387,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           </div>
         )}
 
-        {/* STEP 2: SELECT DATE & TIME SLOT */}
+        {/* STEP 2: MASTER, DATE & TIME SELECTION */}
         {activeStep === 1 && !confirmation && (
-          <div>
-            <h4 className="text-lg font-serif font-bold text-white mb-4 flex items-center gap-2">
+          <div className="space-y-6">
+            <h4 className="text-lg font-serif font-bold text-white mb-2 flex items-center gap-2">
               <CalendarMonth className="text-gold-400" />
-              <span>2. Оберіть дату та час прийому</span>
+              <span>2. Оберіть дату, майстра та час</span>
             </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Date Input */}
-              <div className="md:col-span-1 bg-dark-900 p-4 rounded-xl border border-gold-600/20">
-                <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-2">
+            {/* Top Bar: Date Selector */}
+            <div className="bg-dark-900 p-4 rounded-xl border border-gold-600/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-1">
                   Дата візиту
                 </label>
                 <input
@@ -373,52 +407,129 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   max={dayjs().add(30, 'day').format('YYYY-MM-DD')}
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full bg-dark-950 border border-gold-600/30 rounded-lg p-3 text-white focus:border-gold-400 focus:outline-none text-sm"
+                  className="bg-dark-950 border border-gold-600/30 rounded-lg px-3 py-2 text-white focus:border-gold-400 focus:outline-none text-sm"
                 />
-                <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
-                  Режим роботи салонa: <br />
-                  <strong className="text-white">Щодня з 09:00 до 20:00</strong>
-                </p>
               </div>
 
-              {/* Time Slots Grid */}
-              <div className="md:col-span-2 bg-dark-900 p-4 rounded-xl border border-gold-600/20">
-                <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-3 flex items-center gap-1.5">
+              <div className="text-xs text-gray-400">
+                <span>Обрана дата: </span>
+                <strong className="text-gold-400 font-semibold">{dayjs(selectedDate).format('DD.MM.YYYY')}</strong>
+                <span className="block text-[11px] text-gray-500">Графік роботи: 09:00 – 20:00</span>
+              </div>
+            </div>
+
+            {/* Master Selection Section */}
+            <div className="bg-dark-900 p-5 rounded-xl border border-gold-600/20 space-y-3">
+              <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold flex items-center gap-1.5">
+                <ContentCut fontSize="small" />
+                <span>Оберіть майстра на {dayjs(selectedDate).format('DD.MM.YYYY')}</span>
+              </label>
+
+              {loadingMasters ? (
+                <div className="flex items-center gap-2 py-4 text-xs text-gray-400">
+                  <CircularProgress size={18} style={{ color: '#C59A77' }} />
+                  <span>Перевірка розкладу майстрів...</span>
+                </div>
+              ) : availableMasters.length === 0 ? (
+                <Alert severity="warning" className="bg-amber-950/50 border border-amber-500/40 text-amber-200">
+                  На обрану дату немає працюючих майстрів. Будь ласка, оберіть інший день.
+                </Alert>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Option 1: Any Master */}
+                  <div
+                    onClick={() => setSelectedMasterId('ANY')}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
+                      selectedMasterId === 'ANY'
+                        ? 'bg-gold-600/20 border-gold-400 shadow-gold-sm'
+                        : 'bg-dark-950 border-gold-600/20 hover:border-gold-600/40'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gold-600/20 border border-gold-400/40 flex items-center justify-center text-gold-400">
+                      <AutoAwesome fontSize="small" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-xs text-white block">Будь-який вільний майстер</span>
+                      <span className="text-[10px] text-gold-400 block">Автоматичний підбір</span>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Working Barbers for Date */}
+                  {availableMasters.map((m) => {
+                    const isSelected = selectedMasterId === m.id;
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => setSelectedMasterId(m.id)}
+                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-gold-600/20 border-gold-400 shadow-gold-sm'
+                            : 'bg-dark-950 border-gold-600/20 hover:border-gold-600/40'
+                        }`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-purple-900/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-serif font-bold text-sm">
+                          {m.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-xs text-white block">{m.name}</span>
+                          <span className="text-[10px] text-emerald-400 font-medium block">
+                            ✓ Працює сьогодні
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Time Slot Selection Section */}
+            {availableMasters.length > 0 && (
+              <div className="bg-dark-900 p-5 rounded-xl border border-gold-600/20 space-y-3">
+                <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold flex items-center gap-1.5">
                   <AccessTime fontSize="small" />
-                  <span>Вільний час на {dayjs(selectedDate).format('DD.MM.YYYY')}</span>
+                  <span>
+                    Вільні слоти (
+                    {selectedMasterId === 'ANY' ? 'Будь-який майстер' : selectedMasterObj?.name || 'Майстер'}
+                    )
+                  </span>
                 </label>
 
                 {loadingSlots ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <CircularProgress style={{ color: '#C59A77' }} size={32} />
-                    <span className="text-xs text-gray-400 mt-2">Завантаження слотів...</span>
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <CircularProgress style={{ color: '#C59A77' }} size={28} />
+                    <span className="text-xs text-gray-400 mt-2">Оновлення вільних слотів...</span>
                   </div>
-                ) : availableSlots.length === 0 ? (
+                ) : slotsData.length === 0 ? (
                   <Alert severity="warning" className="bg-amber-950/40 border border-amber-500/30 text-amber-200">
-                    На цю дату немає вільних слотів. Будь ласка, оберіть інший день.
+                    На жаль, на цей день немає вільних слотів.
                   </Alert>
                 ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
-                    {availableSlots.map((slot) => {
-                      const isSelected = selectedTimeSlot === slot;
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                    {slotsData.map((slot) => {
+                      const isSelected = selectedTimeSlot === slot.timeSlot;
                       return (
                         <button
-                          key={slot}
-                          onClick={() => setSelectedTimeSlot(slot)}
-                          className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                          key={slot.timeSlot}
+                          disabled={!slot.isAvailable}
+                          onClick={() => setSelectedTimeSlot(slot.timeSlot)}
+                          className={`py-2.5 px-2 rounded-lg text-xs font-bold transition-all border ${
                             isSelected
                               ? 'bg-gold-gradient text-dark-950 border-transparent shadow-gold-sm scale-105'
+                              : !slot.isAvailable
+                              ? 'bg-dark-950/40 text-gray-600 border-gray-800/80 cursor-not-allowed line-through opacity-50'
                               : 'bg-dark-950 text-gray-200 border-gold-600/20 hover:border-gold-400 hover:text-white'
                           }`}
+                          title={!slot.isAvailable ? 'Зайнято або майстер не працює' : `Обрати ${slot.timeSlot}`}
                         >
-                          {slot}
+                          {slot.timeSlot}
                         </button>
                       );
                     })}
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -435,16 +546,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-1">
                   Прізвище та імʼя *
                 </label>
-                <div className="relative">
-                  <TextField
-                    fullWidth
-                    placeholder="напр. Олександр Коваленко"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  placeholder="напр. Олександр Коваленко"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
               </div>
 
               <div>
@@ -499,6 +608,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
 
               <div className="flex justify-between items-center pb-3 border-b border-gray-800">
+                <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Майстер</span>
+                <span className="text-white font-semibold">
+                  {selectedMasterId === 'ANY' ? 'Будь-який вільний майстер' : selectedMasterObj?.name || 'Обраний майстер'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-800">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Дата та час</span>
                 <span className="text-white font-medium">
                   {dayjs(selectedDate).format('DD.MM.YYYY')} о {selectedTimeSlot}
@@ -549,6 +665,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <span className="text-white font-semibold">{confirmation.serviceName}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-gray-400">Перукар:</span>
+                <span className="text-gold-400 font-semibold">
+                  {confirmation.booking?.masterName || confirmation.masterName || 'Майстер Лелея'}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-gray-400">Час візиту:</span>
                 <span className="text-white font-medium">
                   {dayjs(confirmation.date).format('DD.MM.YYYY')} о {confirmation.timeSlot}
@@ -566,7 +688,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </Button>
           </div>
         )}
-
       </DialogContent>
 
       {/* Navigation Buttons Footer */}
@@ -606,3 +727,5 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     </Dialog>
   );
 };
+
+export default BookingModal;

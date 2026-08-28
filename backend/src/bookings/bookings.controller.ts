@@ -8,14 +8,20 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
-  @Get('available-slots')
-  async getAvailableSlots(@Query('date') date: string) {
+  @Get('available-masters')
+  async getAvailableMasters(@Query('date') date: string) {
     const targetDate = date || new Date().toISOString().split('T')[0];
-    const slots = await this.bookingsService.getAvailableSlots(targetDate);
-    return {
-      date: targetDate,
-      availableSlots: slots,
-    };
+    return this.bookingsService.getAvailableMastersForDate(targetDate);
+  }
+
+  @Get('available-slots')
+  async getAvailableSlots(
+    @Query('date') date: string,
+    @Query('masterId') masterId?: string,
+    @Query('serviceId') serviceId?: string,
+  ) {
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    return this.bookingsService.getAvailableSlots(targetDate, masterId, serviceId);
   }
 
   @Post()

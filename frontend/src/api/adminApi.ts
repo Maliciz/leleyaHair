@@ -31,6 +31,12 @@ export interface MasterItem {
   id: string;
   name: string;
   isActive: boolean;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  } | null;
 }
 
 export interface LoginResponse {
@@ -64,6 +70,14 @@ export const adminApi = {
     return response.data;
   },
 
+  async rescheduleBooking(
+    id: string,
+    data: { date: string; timeSlot: string; masterId?: string; comment?: string }
+  ): Promise<AdminBookingItem> {
+    const response = await axiosInstance.patch(`/admin/bookings/${id}/reschedule`, data);
+    return response.data;
+  },
+
   async updateBookingDetails(id: string, data: { status?: string; masterId?: string; comment?: string }): Promise<AdminBookingItem> {
     const response = await axiosInstance.patch(`/admin/bookings/${id}`, data);
     return response.data;
@@ -71,6 +85,16 @@ export const adminApi = {
 
   async getMastersList(): Promise<MasterItem[]> {
     const response = await axiosInstance.get('/admin/masters');
+    return response.data;
+  },
+
+  async createMaster(data: { name: string; email: string; password: string; phone?: string }): Promise<MasterItem> {
+    const response = await axiosInstance.post('/admin/masters', data);
+    return response.data;
+  },
+
+  async toggleMasterStatus(id: string): Promise<MasterItem> {
+    const response = await axiosInstance.patch(`/admin/masters/${id}/toggle-status`);
     return response.data;
   },
 };

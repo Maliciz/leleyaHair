@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Query, Body, Param, UseGuards } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { BookingStatus } from '@prisma/client';
 
@@ -26,6 +27,11 @@ export class AdminBookingsController {
   @Patch(':id/master')
   async assignMaster(@Param('id') id: string, @Body('masterId') masterId: string) {
     return this.bookingsService.updateBooking(id, { masterId });
+  }
+
+  @Patch(':id/reschedule')
+  async rescheduleBooking(@Param('id') id: string, @Body() rescheduleDto: RescheduleBookingDto) {
+    return this.bookingsService.rescheduleBooking(id, rescheduleDto);
   }
 
   @Patch(':id')

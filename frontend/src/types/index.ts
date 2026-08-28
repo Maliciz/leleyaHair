@@ -27,6 +27,7 @@ export interface CreateBookingPayload {
   serviceId: string;
   date: string;
   timeSlot: string;
+  masterId?: string;
   notes?: string;
 }
 
@@ -36,12 +37,25 @@ export interface BookingConfirmation {
   clientPhone: string;
   serviceId: string;
   serviceName: string;
-  servicePrice: string;
+  servicePrice?: string;
+  masterName?: string;
   date: string;
   timeSlot: string;
   notes?: string;
   createdAt: string;
   status: string;
+  booking?: {
+    id: string;
+    clientName: string;
+    clientPhone: string;
+    serviceName: string;
+    price: string;
+    date: string;
+    timeSlot: string;
+    masterName?: string;
+    status: string;
+    createdAt: string;
+  };
 }
 
 export interface ReviewItem {
