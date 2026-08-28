@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#1c1917" />
+      <stop offset="70%" stop-color="#0c0a09" />
+      <stop offset="100%" stop-color="#050505" />
+    </radialGradient>
+
+    <!-- Metallic Gold Main Gradient -->
+    <linearGradient id="gold-primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF3A7" />
+      <stop offset="25%" stop-color="#F59E0B" />
+      <stop offset="50%" stop-color="#D97706" />
+      <stop offset="75%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#92400E" />
+    </linearGradient>
+
+    <!-- Soft Gold Light -->
+    <linearGradient id="gold-light" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FEF3C7" />
+    </linearGradient>
+
+    <!-- Outer Gold Ring Gradient -->
+    <linearGradient id="gold-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="30%" stop-color="#78350F" />
+      <stop offset="50%" stop-color="#FDE68A" />
+      <stop offset="80%" stop-color="#B45309" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base Circle Background -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg-grad)" />
+
+  <!-- Outer Dual Gold Crest Rings -->
+  <circle cx="256" cy="256" r="236" fill="none" stroke="url(#gold-ring)" stroke-width="5" />
+  <circle cx="256" cy="256" r="224" fill="none" stroke="url(#gold-primary)" stroke-width="1.5" stroke-dasharray="6 8" opacity="0.7" />
+  <circle cx="256" cy="256" r="214" fill="none" stroke="url(#gold-ring)" stroke-width="2" />
+
+  <!-- Subtle Hair Flow Swirl in Background -->
+  <path d="M 130 330 C 110 230, 200 130, 310 130 C 390 130, 410 210, 350 270 C 310 310, 240 310, 210 275 C 190 250, 200 215, 235 210 C 265 205, 280 230, 265 245" 
+        fill="none" stroke="url(#gold-primary)" stroke-width="3" stroke-linecap="round" opacity="0.25" />
+
+  <!-- Main Luxury Monogram "L" -->
+  <g filter="url(#gold-glow)">
+    
+    <!-- Hair Strand Swoosh woven into top of L -->
+    <path d="M 165 175 C 210 145, 275 140, 335 170 C 365 185, 375 210, 360 230 C 345 250, 315 250, 305 235 C 295 220, 310 205, 325 205" 
+          fill="none" stroke="url(#gold-light)" stroke-width="4.5" stroke-linecap="round" opacity="0.6" />
+
+    <!-- Main Solid Monogram Letter 'L' Path -->
+    <path d="
+      M 195 145
+      C 220 145, 248 128, 265 118
+      C 258 135, 254 165, 254 200
+      L 254 322
+      C 254 336, 258 340, 272 340
+      L 335 340
+      C 360 340, 370 328, 378 302
+      L 385 304
+      C 380 345, 368 365, 325 365
+      L 208 365
+      C 182 365, 172 355, 172 338
+      C 172 328, 182 322, 195 322
+      C 210 322, 216 330, 216 316
+      L 216 190
+      C 216 165, 202 152, 185 150
+      Z" 
+      fill="url(#gold-primary)" stroke="url(#gold-light)" stroke-width="1.5" />
+
+    <!-- Inner Metallic Highlight Line -->
+    <path d="
+      M 233 150
+      L 233 340
+      L 322 340
+      C 342 340, 352 332, 358 312
+      " 
+      fill="none" stroke="url(#gold-light)" stroke-width="3" opacity="0.75" stroke-linecap="round" />
+
+    <!-- Diamond / Scissors Crown Accent at Top of L -->
+    <path d="M 265 118 L 273 104 L 281 118 L 273 132 Z" fill="url(#gold-light)" />
+    <circle cx="273" cy="118" r="2.5" fill="#FFFFFF" />
+
+    <!-- Sparkle Stars -->
+    <!-- Top Right Sparkle -->
+    <path d="M 355 135 Q 355 150 370 150 Q 355 150 355 165 Q 355 150 340 150 Q 355 150 355 135 Z" fill="url(#gold-light)" />
+    <!-- Bottom Right Subtle Sparkle -->
+    <path d="M 395 280 Q 395 290 405 290 Q 395 290 395 300 Q 395 290 385 290 Q 395 290 395 280 Z" fill="url(#gold-light)" opacity="0.85" />
+    <!-- Left Accent Sparkle -->
+    <path d="M 150 250 Q 150 258 158 258 Q 150 258 150 266 Q 150 258 142 258 Q 150 258 150 250 Z" fill="url(#gold-light)" opacity="0.7" />
+  </g>
+</svg>
