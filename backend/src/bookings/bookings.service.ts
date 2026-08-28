@@ -3,12 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
+import { NotificationService } from '../notification/notification.service';
 import { BookingStatus } from '@prisma/client';
 import dayjs from 'dayjs';
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService
+  ) {}
 
   async getAvailableMastersForDate(dateStr: string) {
     const startOfDay = dayjs(dateStr).startOf('day').toDate();
@@ -190,6 +194,36 @@ export class BookingsService {
       },
     });
 
+    // Send instant notification alert to master and admin if configured
+    const adminChatId = (process.env.TELEGRAM_ADMIN_CHAT_ID || '').trim();
+    const alertData = {
+      clientName: dto.clientName,
+      clientPhone: dto.clientPhone,
+      date: dto.date,
+      timeSlot: dto.timeSlot,
+      serviceName: service.name,
+      price: service.price,
+      priceValue: service.priceValue,
+      comment: dto.comment,
+    };
+
+    if (assignedMasterId) {
+      this.prisma.master
+        .findUnique({ where: { id: assignedMasterId } })
+        .then((master) => {
+          const masterChatId = master?.telegramChatId || master?.notificationUserId;
+          if (masterChatId) {
+            this.notificationService.sendBookingAlert(masterChatId, alertData);
+          }
+          if (adminChatId && adminChatId !== masterChatId) {
+            this.notificationService.sendBookingAlert(adminChatId, alertData);
+          }
+        })
+        .catch((err) => console.error('Failed to trigger booking notification:', err));
+    } else if (adminChatId) {
+      this.notificationService.sendBookingAlert(adminChatId, alertData);
+    }
+
     const refCode = `LELEYA-${dto.date.replace(/-/g, '')}-${booking.id.slice(0, 4).toUpperCase()}`;
 
     return {
@@ -241,7 +275,7 @@ export class BookingsService {
     const dateTimeStr = `${dto.date}T${dto.timeSlot}:00.000Z`;
     const dateTime = new Date(dateTimeStr);
 
-    return this.prisma.booking.update({
+    const updatedBooking = await this.prisma.booking.update({
       where: { id },
       data: {
         date: dto.date,
@@ -255,6 +289,37 @@ export class BookingsService {
         master: true,
       },
     });
+
+    // Send reschedule notification alert
+    const finalMasterId = updatedBooking.masterId || (targetMasterId !== 'ANY' ? targetMasterId : null);
+    const adminChatId = (process.env.TELEGRAM_ADMIN_CHAT_ID || '').trim();
+    const rescheduleData = {
+      clientName: updatedBooking.clientName,
+      clientPhone: updatedBooking.clientPhone,
+      date: updatedBooking.date,
+      timeSlot: updatedBooking.timeSlot,
+      serviceName: updatedBooking.service.name,
+      comment: updatedBooking.comment || undefined,
+    };
+
+    if (finalMasterId) {
+      this.prisma.master
+        .findUnique({ where: { id: finalMasterId } })
+        .then((master) => {
+          const masterChatId = master?.telegramChatId || master?.notificationUserId;
+          if (masterChatId) {
+            this.notificationService.sendRescheduleAlert(masterChatId, rescheduleData);
+          }
+          if (adminChatId && adminChatId !== masterChatId) {
+            this.notificationService.sendRescheduleAlert(adminChatId, rescheduleData);
+          }
+        })
+        .catch((err) => console.error('Failed to trigger reschedule notification:', err));
+    } else if (adminChatId) {
+      this.notificationService.sendRescheduleAlert(adminChatId, rescheduleData);
+    }
+
+    return updatedBooking;
   }
 
   async getAllBookings(date?: string) {

@@ -31,6 +31,8 @@ export interface MasterItem {
   id: string;
   name: string;
   isActive: boolean;
+  telegramChatId?: string | null;
+  notificationUserId?: string | null;
   user?: {
     id: string;
     email: string;
@@ -88,8 +90,13 @@ export const adminApi = {
     return response.data;
   },
 
-  async createMaster(data: { name: string; email: string; password: string; phone?: string }): Promise<MasterItem> {
+  async createMaster(data: { name: string; email: string; password: string; phone?: string; telegramChatId?: string; notificationUserId?: string }): Promise<MasterItem> {
     const response = await axiosInstance.post('/admin/masters', data);
+    return response.data;
+  },
+
+  async updateMaster(id: string, data: { name?: string; telegramChatId?: string; notificationUserId?: string }): Promise<MasterItem> {
+    const response = await axiosInstance.patch(`/admin/masters/${id}`, data);
     return response.data;
   },
 

@@ -9,8 +9,9 @@ import {
   Lock,
   Phone,
   User,
-  ShieldCheck,
   RefreshCw,
+  MessageSquare,
+  Edit2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   Chip,
   Alert,
   Switch,
@@ -29,14 +29,21 @@ export const MastersTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form State
+  // Form State for Adding Barber
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Edit Chat ID Modal State
+  const [editingMaster, setEditingMaster] = useState<MasterItem | null>(null);
+  const [editChatId, setEditChatId] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const fetchMasters = async () => {
     setLoading(true);
@@ -59,6 +66,7 @@ export const MastersTab: React.FC = () => {
     setEmail('');
     setPassword('');
     setPhone('');
+    setTelegramChatId('');
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -84,6 +92,8 @@ export const MastersTab: React.FC = () => {
         email: email.trim(),
         password: password.trim(),
         phone: phone.trim() || undefined,
+        telegramChatId: telegramChatId.trim() || undefined,
+        notificationUserId: telegramChatId.trim() || undefined,
       });
 
       setSuccessMsg('Акаунт перукаря успішно створено!');
@@ -97,6 +107,31 @@ export const MastersTab: React.FC = () => {
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenEditModal = (master: MasterItem) => {
+    setEditingMaster(master);
+    setEditChatId(master.telegramChatId || master.notificationUserId || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditMaster = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMaster) return;
+
+    setEditSubmitting(true);
+    try {
+      await adminApi.updateMaster(editingMaster.id, {
+        telegramChatId: editChatId.trim() || undefined,
+        notificationUserId: editChatId.trim() || undefined,
+      });
+      fetchMasters();
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error('Failed to update master chat ID:', err);
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -119,7 +154,7 @@ export const MastersTab: React.FC = () => {
             <span>Управління майстрами та перукарями</span>
           </h2>
           <p className="text-xs text-gold-500 mt-1">
-            Додавайте нові акаунти перукарів та керуйте їх доступом до системи
+            Додавайте нові акаунти перукарів, налаштовуйте Chat ID для сповіщень та керуйте їх доступом
           </p>
         </div>
 
@@ -151,9 +186,9 @@ export const MastersTab: React.FC = () => {
               <tr>
                 <th className="py-3.5 px-4">Перукар</th>
                 <th className="py-3.5 px-4">Email / Логін</th>
-                <th className="py-3.5 px-4">Роль</th>
+                <th className="py-3.5 px-4">Telegram Chat ID / Сповіщення</th>
                 <th className="py-3.5 px-4">Статус доступу</th>
-                <th className="py-3.5 px-4 text-right">Перемикач</th>
+                <th className="py-3.5 px-4 text-right">Дії</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gold-600/10">
@@ -170,80 +205,97 @@ export const MastersTab: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                masters.map((m) => (
-                  <tr key={m.id} className="hover:bg-dark-950/60 transition-colors">
-                    {/* Name & Avatar */}
-                    <td className="py-3.5 px-4 font-semibold text-white">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gold-600/20 border border-gold-600/40 flex items-center justify-center text-gold-400 font-bold font-serif text-sm">
-                          {m.name.charAt(0).toUpperCase()}
+                masters.map((m) => {
+                  const chatId = m.telegramChatId || m.notificationUserId;
+                  return (
+                    <tr key={m.id} className="hover:bg-dark-950/60 transition-colors">
+                      {/* Name & Avatar */}
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-gold-600/20 border border-gold-600/40 flex items-center justify-center text-gold-400 font-bold font-serif text-sm">
+                            {m.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-white block">{m.name}</span>
+                            <span className="text-[10px] text-gray-500 block">ID: {m.id.slice(0, 8)}...</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-sm font-medium text-white block">{m.name}</span>
-                          <span className="text-[10px] text-gray-500 block">ID: {m.id.slice(0, 8)}...</span>
+                      </td>
+
+                      {/* Email */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5 text-gray-300">
+                          <Mail className="w-3.5 h-3.5 text-gold-400" />
+                          <span>{m.user?.email || 'Не вказано'}</span>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Email */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-1.5 text-gray-300">
-                        <Mail className="w-3.5 h-3.5 text-gold-400" />
-                        <span>{m.user?.email || 'Не вказано'}</span>
-                      </div>
-                    </td>
+                      {/* Telegram Chat ID Column */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          {chatId ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-900/30 border border-blue-500/30 text-blue-300 font-mono text-xs">
+                              <MessageSquare className="w-3 h-3 text-blue-400" />
+                              <span>{chatId}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-gray-500 italic">Не налаштовано</span>
+                          )}
 
-                    {/* Role */}
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-900/30 text-purple-300 border border-purple-500/30">
-                        <Scissors className="w-3 h-3" />
-                        <span>Перукар (BARBER)</span>
-                      </span>
-                    </td>
+                          <button
+                            onClick={() => handleOpenEditModal(m)}
+                            className="p-1 rounded bg-dark-950 border border-gold-600/30 text-gold-400 hover:bg-gold-600/20 transition-colors"
+                            title="Редагувати Telegram Chat ID"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
 
-                    {/* Status Chip */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      {m.isActive ? (
-                        <Chip
-                          icon={<CheckCircle className="w-3.5 h-3.5 text-emerald-400" />}
-                          label="Активний"
-                          color="success"
-                          size="small"
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Chip
-                          icon={<XCircle className="w-3.5 h-3.5 text-red-400" />}
-                          label="Неактивний"
-                          color="error"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                    </td>
+                      {/* Status Chip */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {m.isActive ? (
+                          <Chip
+                            icon={<CheckCircle className="w-3.5 h-3.5 text-emerald-400" />}
+                            label="Активний"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Chip
+                            icon={<XCircle className="w-3.5 h-3.5 text-red-400" />}
+                            label="Неактивний"
+                            color="error"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </td>
 
-                    {/* Toggle Switch */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-[11px] text-gray-400">
-                          {m.isActive ? 'Доступ дозволено' : 'Заблоковано'}
-                        </span>
-                        <Switch
-                          checked={m.isActive}
-                          onChange={() => handleToggleStatus(m.id)}
-                          sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                              color: '#c59a77',
-                            },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                              backgroundColor: '#c59a77',
-                            },
-                          }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Toggle Switch */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-[11px] text-gray-400">
+                            {m.isActive ? 'Доступ дозволено' : 'Заблоковано'}
+                          </span>
+                          <Switch
+                            checked={m.isActive}
+                            onChange={() => handleToggleStatus(m.id)}
+                            sx={{
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#c59a77',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#c59a77',
+                              },
+                            }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -356,6 +408,25 @@ export const MastersTab: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Telegram Chat ID Input & Helper */}
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-1.5 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                <span>Telegram Chat ID / ID для сповіщень</span>
+              </label>
+              <input
+                type="text"
+                placeholder="напр. 123456789"
+                value={telegramChatId}
+                onChange={(e) => setTelegramChatId(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-dark-950 border border-gold-600/30 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-gold-500"
+              />
+              <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed bg-blue-950/30 border border-blue-500/20 p-2.5 rounded-lg">
+                💡 <strong>Як дізнатися Chat ID:</strong> Майстер має відкрити Telegram та написати боту{' '}
+                <span className="text-blue-300 font-mono">@userinfobot</span>. Бот одразу відправить числовий ID клієнта.
+              </p>
+            </div>
           </DialogContent>
 
           <DialogActions className="border-t border-gold-600/20 px-6 py-4">
@@ -369,6 +440,59 @@ export const MastersTab: React.FC = () => {
               className="bg-gold-gradient text-dark-950 font-bold px-6 py-2.5 rounded-xl"
             >
               {submitting ? 'Створення...' : 'Створити акаунт'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Edit Chat ID Dialog Modal */}
+      <Dialog
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          style: {
+            backgroundColor: '#141418',
+            border: '1px solid rgba(197, 154, 119, 0.3)',
+            borderRadius: '16px',
+            color: '#FFFFFF',
+          },
+        }}
+      >
+        <form onSubmit={handleSaveEditMaster}>
+          <DialogTitle className="border-b border-gold-600/20 px-6 py-4">
+            <span className="font-serif text-lg font-bold text-white">
+              Редагувати Chat ID: {editingMaster?.name}
+            </span>
+          </DialogTitle>
+          <DialogContent className="p-6 space-y-3">
+            <label className="block text-xs uppercase tracking-wider text-gold-500 font-bold mb-1">
+              Telegram Chat ID / ID для сповіщень
+            </label>
+            <input
+              type="text"
+              placeholder="напр. 123456789"
+              value={editChatId}
+              onChange={(e) => setEditChatId(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl bg-dark-950 border border-gold-600/30 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-gold-500"
+            />
+            <p className="text-[11px] text-gray-400 leading-relaxed bg-blue-950/30 border border-blue-500/20 p-2.5 rounded-lg">
+              💡 <strong>Як дізнатися Chat ID:</strong> Напишіть боту{' '}
+              <span className="text-blue-300 font-mono">@userinfobot</span> у Telegram.
+            </p>
+          </DialogContent>
+          <DialogActions className="border-t border-gold-600/20 px-6 py-4">
+            <Button onClick={() => setIsEditModalOpen(false)} style={{ color: '#9CA3AF' }}>
+              Скасувати
+            </Button>
+            <Button
+              type="submit"
+              disabled={editSubmitting}
+              variant="contained"
+              className="bg-gold-gradient text-dark-950 font-bold px-5 py-2 rounded-xl"
+            >
+              {editSubmitting ? 'Збереження...' : 'Зберегти'}
             </Button>
           </DialogActions>
         </form>

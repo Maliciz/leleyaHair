@@ -48,10 +48,14 @@ export class MastersService {
       },
     });
 
+    const chatId = dto.telegramChatId || dto.notificationUserId || null;
+
     const master = await this.prisma.master.create({
       data: {
         name: dto.name.trim(),
         isActive: true,
+        telegramChatId: chatId,
+        notificationUserId: chatId,
         userId: user.id,
       },
       include: {
@@ -67,6 +71,40 @@ export class MastersService {
     });
 
     return master;
+  }
+
+  async updateMaster(id: string, data: { name?: string; telegramChatId?: string; notificationUserId?: string }) {
+    const master = await this.prisma.master.findUnique({
+      where: { id },
+    });
+
+    if (!master) {
+      throw new NotFoundException('Перукаря / майстра не знайдено');
+    }
+
+    const chatId = data.telegramChatId !== undefined
+      ? data.telegramChatId
+      : data.notificationUserId !== undefined
+      ? data.notificationUserId
+      : undefined;
+
+    return this.prisma.master.update({
+      where: { id },
+      data: {
+        ...(data.name && { name: data.name.trim() }),
+        ...(chatId !== undefined && { telegramChatId: chatId, notificationUserId: chatId }),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+    });
   }
 
   async toggleMasterStatus(id: string) {

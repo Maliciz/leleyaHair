@@ -24,4 +24,13 @@ export class MastersController {
   async toggleMasterStatus(@Param('id') id: string) {
     return this.mastersService.toggleMasterStatus(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  async updateMaster(
+    @Param('id') id: string,
+    @Body() body: { name?: string; telegramChatId?: string; notificationUserId?: string }
+  ) {
+    return this.mastersService.updateMaster(id, body);
+  }
 }

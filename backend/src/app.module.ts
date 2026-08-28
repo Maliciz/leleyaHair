@@ -9,6 +9,7 @@ import { BarberModule } from './barber/barber.module';
 import { FinanceModule } from './finance/finance.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { InstagramModule } from './instagram/instagram.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { InstagramModule } from './instagram/instagram.module';
     FinanceModule,
     ReviewsModule,
     InstagramModule,
+    NotificationModule,
   ],
   controllers: [AppController],
 })

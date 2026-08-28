@@ -31,13 +31,15 @@ model User {
 }
 
 model Master {
-  id            String         @id @default(uuid())
-  name          String
-  isActive      Boolean        @default(true)
-  userId        String?        @unique
-  user          User?          @relation(fields: [userId], references: [id])
-  bookings      Booking[]
-  workSchedules WorkSchedule[]
+  id                 String         @id @default(uuid())
+  name               String
+  isActive           Boolean        @default(true)
+  telegramChatId     String?
+  notificationUserId String?
+  userId             String?        @unique
+  user               User?          @relation(fields: [userId], references: [id])
+  bookings           Booking[]
+  workSchedules      WorkSchedule[]
 }
 
 model WorkSchedule {
