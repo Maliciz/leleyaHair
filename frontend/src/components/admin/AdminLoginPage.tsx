@@ -36,7 +36,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
       console.error(err);
       setError(
         err.response?.data?.message ||
-          'Невірна комбінація пошти та паролю. Перевірте введені дані.'
+        'Невірна комбінація пошти та паролю. Перевірте введені дані.'
       );
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="manager@leleya.ua або anastasia@leleya.ua"
+                placeholder="Введіть вашу email-адресу"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-dark-950 border border-gold-600/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-gold-500 transition-colors"
               />
             </div>
@@ -129,12 +129,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
             )}
           </button>
         </form>
-
-        {/* Demo Credentials hint */}
-        <div className="mt-8 pt-4 border-t border-gold-600/10 text-center text-xs text-gray-400 space-y-1">
-          <p>👑 Менеджер: <strong className="text-white">manager@leleya.ua</strong> / <strong className="text-white">manager123</strong></p>
-          <p>✂️ Перукар: <strong className="text-white">anastasia@leleya.ua</strong> / <strong className="text-white">barber123</strong></p>
-        </div>
       </div>
     </div>
   );
