@@ -1,15 +1,33 @@
-import React, { useState } from 'react';
-import { INSTAGRAM_POSTS, InstagramPost } from '../data/instagramPosts';
-import { Instagram, Heart, ExternalLink, Scissors, User, Calendar, Sparkles, X } from 'lucide-react';
-import { Dialog, DialogContent, IconButton } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { instagramApi, InstagramPostItem } from '../api/instagramApi';
+import { Instagram, Heart, ExternalLink, Scissors, User, Calendar, Sparkles, X, Loader2 } from 'lucide-react';
+import { Dialog, IconButton } from '@mui/material';
 
 export const InstagramGallerySection: React.FC = () => {
+  const [posts, setPosts] = useState<InstagramPostItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('Всі');
-  const [activePost, setActivePost] = useState<InstagramPost | null>(null);
+  const [activePost, setActivePost] = useState<InstagramPostItem | null>(null);
 
   const categories = ['Всі', 'Чоловічі', 'Жіночі', 'Дитячі', 'Фарбування'];
 
-  const filteredPosts = INSTAGRAM_POSTS.filter((post) => {
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const data = await instagramApi.getPosts();
+      setPosts(data);
+    } catch (err) {
+      console.error('Error fetching Instagram posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPosts = posts.filter((post) => {
     if (selectedCategory === 'Всі') return true;
     return post.category === selectedCategory;
   });
@@ -62,7 +80,7 @@ export const InstagramGallerySection: React.FC = () => {
                 Перукарня «Лелея» • м. Вишневе, вул. Лесі Українки, 66
               </p>
               <div className="flex items-center gap-4 mt-2 text-xs text-gray-300 font-medium">
-                <span><b>8</b> дописів</span>
+                <span><b>{posts.length}</b> дописів</span>
                 <span>•</span>
                 <span className="text-gold-400"><b>100%</b> задоволених клієнтів</span>
               </div>
@@ -98,80 +116,93 @@ export const InstagramGallerySection: React.FC = () => {
           ))}
         </div>
 
-        {/* Gallery Image Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredPosts.map((post) => (
-            <div
-              key={post.id}
-              onClick={() => setActivePost(post)}
-              className="group relative bg-dark-900 rounded-2xl overflow-hidden border border-gold-600/20 hover:border-gold-500/60 shadow-xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5"
-            >
-              {/* Image with zoom effect */}
-              <div className="aspect-square w-full overflow-hidden relative">
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                />
+        {/* Loading Spinner */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-16 bg-dark-900/60 rounded-2xl border border-gold-600/20">
+            <Instagram className="w-12 h-12 text-gold-500/40 mx-auto mb-3" />
+            <p className="text-gray-300 text-base font-semibold">Публікацій у цій категорії поки немає</p>
+            <p className="text-xs text-gray-500 mt-1">Перевірте інші категорії або завітайте на наш Instagram</p>
+          </div>
+        ) : (
+          /* Gallery Image Grid */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredPosts.map((post) => (
+              <div
+                key={post.id}
+                onClick={() => setActivePost(post)}
+                className="group relative bg-dark-900 rounded-2xl overflow-hidden border border-gold-600/20 hover:border-gold-500/60 shadow-xl cursor-pointer transition-all duration-500 hover:-translate-y-1.5"
+              >
+                {/* Image with zoom effect */}
+                <div className="aspect-square w-full overflow-hidden relative">
+                  <img
+                    src={post.imageUrl || 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&auto=format&fit=crop&q=80'}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
 
-                {/* Category Badge */}
-                <div className="absolute top-3 left-3 z-10">
-                  <span className="px-2.5 py-1 rounded-lg bg-dark-950/80 backdrop-blur-md border border-gold-600/30 text-[10px] font-bold text-gold-400">
-                    {post.category}
-                  </span>
-                </div>
+                  {/* Category Badge */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="px-2.5 py-1 rounded-lg bg-dark-950/80 backdrop-blur-md border border-gold-600/30 text-[10px] font-bold text-gold-400">
+                      {post.category}
+                    </span>
+                  </div>
 
-                {/* Likes Counter Overlay */}
-                <div className="absolute top-3 right-3 z-10">
-                  <span className="px-2.5 py-1 rounded-lg bg-dark-950/80 backdrop-blur-md border border-red-500/30 text-[10px] font-bold text-rose-400 flex items-center gap-1">
-                    <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
-                    <span>{post.likesCount}</span>
-                  </span>
-                </div>
+                  {/* Likes Counter Overlay */}
+                  <div className="absolute top-3 right-3 z-10">
+                    <span className="px-2.5 py-1 rounded-lg bg-dark-950/80 backdrop-blur-md border border-red-500/30 text-[10px] font-bold text-rose-400 flex items-center gap-1">
+                      <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
+                      <span>{post.likesCount}</span>
+                    </span>
+                  </div>
 
-                {/* Full Hover Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col justify-end">
-                  <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs text-gold-400 font-semibold">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-gold-500" />
-                        <span>Майстер: {post.masterName || 'ЛЕЛЕЯ'}</span>
-                      </span>
-                      <Instagram className="w-4 h-4 text-pink-400" />
-                    </div>
-                    <h4 className="font-serif text-lg font-bold text-white leading-tight">
-                      {post.title}
-                    </h4>
-                    <p className="text-xs text-gray-300 line-clamp-2">
-                      {post.description}
-                    </p>
-                    <div className="pt-2 flex items-center gap-1 text-xs text-gold-400 font-bold">
-                      <span>Натисніть для деталей</span>
-                      <span>→</span>
+                  {/* Full Hover Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col justify-end">
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-gold-400 font-semibold">
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3 text-gold-500" />
+                          <span>Майстер: {post.masterName || 'ЛЕЛЕЯ'}</span>
+                        </span>
+                        <Instagram className="w-4 h-4 text-pink-400" />
+                      </div>
+                      <h4 className="font-serif text-lg font-bold text-white leading-tight">
+                        {post.title}
+                      </h4>
+                      <p className="text-xs text-gray-300 line-clamp-2">
+                        {post.description}
+                      </p>
+                      <div className="pt-2 flex items-center gap-1 text-xs text-gold-400 font-bold">
+                        <span>Натисніть для деталей</span>
+                        <span>→</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Bottom Card Title Bar */}
-              <div className="p-4 border-t border-gold-600/10 flex items-center justify-between bg-dark-900/90">
-                <div>
-                  <h4 className="font-serif text-sm font-bold text-white truncate max-w-[170px]">
-                    {post.title}
-                  </h4>
-                  <span className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                    <Scissors className="w-3 h-3 text-gold-500" />
-                    <span>{post.masterName}</span>
-                  </span>
-                </div>
+                {/* Bottom Card Title Bar */}
+                <div className="p-4 border-t border-gold-600/10 flex items-center justify-between bg-dark-900/90">
+                  <div>
+                    <h4 className="font-serif text-sm font-bold text-white truncate max-w-[170px]">
+                      {post.title}
+                    </h4>
+                    <span className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                      <Scissors className="w-3 h-3 text-gold-500" />
+                      <span>{post.masterName || 'Майстер salon'}</span>
+                    </span>
+                  </div>
 
-                <div className="w-8 h-8 rounded-full bg-gold-600/10 border border-gold-600/30 flex items-center justify-center text-gold-400 group-hover:bg-gold-500 group-hover:text-dark-950 transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-full bg-gold-600/10 border border-gold-600/30 flex items-center justify-center text-gold-400 group-hover:bg-gold-500 group-hover:text-dark-950 transition-colors">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
       </div>
 
@@ -213,7 +244,7 @@ export const InstagramGallerySection: React.FC = () => {
             {/* Left Image View */}
             <div className="w-full md:w-1/2 bg-black flex items-center justify-center">
               <img
-                src={activePost.imageUrl}
+                src={activePost.imageUrl || 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&auto=format&fit=crop&q=80'}
                 alt={activePost.title}
                 className="w-full h-full max-h-[500px] object-cover"
               />
@@ -231,7 +262,7 @@ export const InstagramGallerySection: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-serif text-sm font-bold text-white">Перукарня «Лелея»</h4>
-                      <span className="text-xs text-gold-400">Майстер: {activePost.masterName}</span>
+                      <span className="text-xs text-gold-400">Майстер: {activePost.masterName || 'ЛЕЛЕЯ'}</span>
                     </div>
                   </div>
 
@@ -259,7 +290,7 @@ export const InstagramGallerySection: React.FC = () => {
 
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-gold-500" />
-                    <span>{activePost.date}</span>
+                    <span>{new Date(activePost.createdAt).toLocaleDateString('uk-UA')}</span>
                   </span>
                 </div>
               </div>
@@ -267,7 +298,7 @@ export const InstagramGallerySection: React.FC = () => {
               {/* Direct Instagram Link Button */}
               <div className="pt-4 border-t border-gold-600/20 space-y-3">
                 <a
-                  href={activePost.postUrl}
+                  href={activePost.postUrl || 'https://www.instagram.com/leleya.hair/'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-95 text-white font-bold text-sm tracking-wide shadow-lg transition-all flex items-center justify-center gap-2"

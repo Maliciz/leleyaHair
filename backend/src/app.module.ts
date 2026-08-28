@@ -8,6 +8,7 @@ import { MastersModule } from './masters/masters.module';
 import { BarberModule } from './barber/barber.module';
 import { FinanceModule } from './finance/finance.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { InstagramModule } from './instagram/instagram.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     BarberModule,
     FinanceModule,
     ReviewsModule,
+    InstagramModule,
   ],
   controllers: [AppController],
 })

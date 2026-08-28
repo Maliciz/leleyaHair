@@ -6,6 +6,7 @@ import {
 } from '../../api/adminApi';
 import BookingDetailModal from './BookingDetailModal';
 import FinanceTab from './FinanceTab';
+import InstagramTab from './InstagramTab';
 import { exportBookingsToExcel } from '../../utils/excelExportUtility';
 import {
   LogOut,
@@ -23,6 +24,7 @@ import {
   TrendingUp,
   BookOpen,
   FileSpreadsheet,
+  Instagram,
 } from 'lucide-react';
 import { Chip, MenuItem, Select, Tabs, Tab, Box } from '@mui/material';
 
@@ -162,7 +164,7 @@ export const AdminDashboardPage: React.FC = () => {
             <h1 className="font-serif text-xl font-bold tracking-wide text-white">
               Панель керування — Перукарня «Лелея»
             </h1>
-            <p className="text-xs text-gold-400">Система управління онлайн-записами та фінансами</p>
+            <p className="text-xs text-gold-400">Система управління онлайн-записами, фінансами та контентом</p>
           </div>
         </div>
 
@@ -197,7 +199,7 @@ export const AdminDashboardPage: React.FC = () => {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
-        {/* Navigation Tabs (Bookings vs Finance) */}
+        {/* Navigation Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'rgba(197, 154, 119, 0.2)' }}>
           <Tabs
             value={activeTab}
@@ -215,6 +217,7 @@ export const AdminDashboardPage: React.FC = () => {
           >
             <Tab icon={<BookOpen className="w-4 h-4 mr-2" />} iconPosition="start" label="Записи та Замовлення" />
             <Tab icon={<TrendingUp className="w-4 h-4 mr-2" />} iconPosition="start" label="Фінанси та Виплати" />
+            <Tab icon={<Instagram className="w-4 h-4 mr-2" />} iconPosition="start" label="Керування Instagram" />
           </Tabs>
         </Box>
 
@@ -549,6 +552,9 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 1: FINANCIAL & REVENUE MANAGEMENT */}
         {activeTab === 1 && <FinanceTab key={financeRefreshKey} />}
+
+        {/* TAB 2: INSTAGRAM CONTENT MANAGEMENT */}
+        {activeTab === 2 && <InstagramTab />}
 
       </main>
 

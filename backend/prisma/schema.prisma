@@ -75,3 +75,15 @@ model Booking {
   master      Master?       @relation(fields: [masterId], references: [id])
   createdAt   DateTime      @default(now())
 }
+
+model InstagramPost {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String   // 'Чоловічі' | 'Жіночі' | 'Дитячі' | 'Фарбування'
+  imageUrl    String
+  postUrl     String
+  masterName  String?
+  likesCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
