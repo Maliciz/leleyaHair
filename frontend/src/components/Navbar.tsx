@@ -57,9 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a href="#reviews" className="hover:text-gold-400 transition-colors">
               Відгуки
             </a>
-            <a href="#payment" className="hover:text-gold-400 transition-colors">
-              Оплата
-            </a>
             <a href="#contacts" className="hover:text-gold-400 transition-colors">
               Контакти
             </a>
@@ -135,13 +132,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
               className="text-gray-300 hover:text-gold-400"
             >
               Відгуки
-            </a>
-            <a
-              href="#payment"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-gray-300 hover:text-gold-400"
-            >
-              Оплата
             </a>
             <a
               href="#contacts"

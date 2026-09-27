@@ -4,7 +4,6 @@ import { HeroSection } from './components/HeroSection';
 import { PriceListSection } from './components/PriceListSection';
 import { InstagramGallerySection } from './components/InstagramGallerySection';
 import { ReviewsSection } from './components/ReviewsSection';
-import { PaymentSection } from './components/PaymentSection';
 import { Footer } from './components/Footer';
 import { BookingModal } from './components/BookingModal';
 import { ProtectedAdminRoute } from './components/admin/ProtectedAdminRoute';
@@ -94,7 +93,6 @@ export const App: React.FC = () => {
         <PriceListSection onSelectService={(service: any) => handleOpenBooking(service)} />
         <InstagramGallerySection />
         <ReviewsSection />
-        <PaymentSection />
       </main>
 
       {/* Footer & Map */}
