@@ -4,7 +4,7 @@ const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 export const axiosInstance = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,11 +29,13 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear expired auth session if on admin pages
-      if (window.location.pathname.startsWith('/admin') && !window.location.pathname.includes('/login')) {
+      // Clear expired auth session if on admin or barber pages
+      const hash = window.location.hash || '';
+      if ((hash.includes('/admin') || hash.includes('/barber')) && !hash.includes('/login')) {
         localStorage.removeItem('leleya_admin_token');
         localStorage.removeItem('leleya_admin_user');
-        window.location.href = '#/admin/login';
+        window.location.hash = '#/admin/login';
+        window.location.reload();
       }
     }
     return Promise.reject(error);
